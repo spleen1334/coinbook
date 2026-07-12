@@ -17,7 +17,7 @@
 - `src/utils.js`: pure helpers for dates, money formatting, CSV parsing/escaping, downloads, and coin styling.
 - `src/App.css`: global styles, responsive layout, animations.
 - `public/icons/`: PWA icons referenced by manifest/service worker.
-- `docs/`: architecture, deployment, data format, and formatting notes.
+- `docs/deployment.md`: GitHub Pages and PWA deployment notes.
 
 ## Important invariants
 

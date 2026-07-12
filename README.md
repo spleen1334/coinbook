@@ -44,7 +44,7 @@ coinbook-pwa/
     App.css           Global styles and animations
     data.js           Static categories, translations, seed entries
     utils.js          Shared helpers for dates, money, CSV, downloads, visuals
-  docs/               Architecture, deployment, data-format, formatting notes
+  docs/deployment.md  GitHub Pages and PWA deployment notes
 ```
 
 The first component split is complete: `src/components/` contains stateless presentational screens and UI pieces. `src/App.jsx` still owns state transitions, persistence, derived view data, and import/export behavior.
@@ -56,16 +56,12 @@ The first component split is complete: `src/components/` contains stateless pres
 - JSON export intentionally includes only `{ categories, expenses }`.
 - CSV import/export columns are `date,category,amount,note`.
 
-See [docs/data-format.md](docs/data-format.md) for exact shapes.
-
 ## Documentation
 
-- [Architecture](docs/architecture.md)
 - [Deployment](docs/deployment.md)
-- [Data format](docs/data-format.md)
-- [Formatting](docs/formatting.md)
 
 ## Notes
 
+- Formatting uses Prettier: single quotes, semicolons, no trailing commas, 120-character print width.
 - No automated tests currently exist. Use lint, format check, and production build as validation.
 - GitHub Pages project builds require `VITE_BASE_PATH=/coinbook-pwa/`; see deployment docs for root/custom-domain notes.
