@@ -1,85 +1,12 @@
-export const CAT_DEFS = [
-  { id: 'bills', name: 'Bills' },
-  { id: 'books', name: 'Books' },
-  { id: 'cars', name: 'Cars' },
-  { id: 'cash', name: 'Cash' },
-  { id: 'clothes', name: 'Clothes' },
-  { id: 'communication', name: 'Communication' },
-  { id: 'crypto', name: 'Crypto' },
-  { id: 'digital', name: 'Digital' },
-  { id: 'eating_out', name: 'Eating out' },
-  { id: 'education', name: 'Education' },
-  { id: 'entertainment', name: 'Entertainment' },
-  { id: 'food', name: 'Food' },
-  { id: 'junk', name: 'Junk' },
-  { id: 'gadgets', name: 'Gadgets' },
-  { id: 'gifts', name: 'Gifts' },
-  { id: 'games', name: 'Games' },
-  { id: 'fuel', name: 'Fuel' },
-  { id: 'health', name: 'Health' },
-  { id: 'hobbies', name: 'Hobbies' },
-  { id: 'house', name: 'House' },
-  { id: 'job', name: 'Job' },
-  { id: 'cart_riding', name: 'Cart riding' },
-  { id: 'culture', name: 'Culture' },
-  { id: 'medicine', name: 'Medicine' },
-  { id: 'motorcycles', name: 'Motorcycles' },
-  { id: 'furniture', name: 'Furniture' },
-  { id: 'house_decoration', name: 'House decoration' },
-  { id: 'unsure', name: "I don't know" },
-  { id: 'insurance', name: 'Insurance' },
-  { id: 'pets', name: 'Pets' },
-  { id: 'family', name: 'Family' },
-  { id: 'random', name: 'Random' },
-  { id: 'relax', name: 'Relax' },
-  { id: 'rent', name: 'Rent' },
-  { id: 'sports', name: 'Sports' },
-  { id: 'shooting_range', name: 'Shooting range' },
-  { id: 'taxes', name: 'Taxes' },
-  { id: 'taxi', name: 'Taxi' },
-  { id: 'toiletry', name: 'Toiletry' },
-  { id: 'transport', name: 'Transport' },
-  { id: 'travel', name: 'Travel' },
-  { id: 'tea', name: 'Tea' }
-];
-
-export const SWATCHES = ['#8a5a3b', '#3f6b52', '#b5432e', '#5c6e8a', '#a67c3d', '#6b4a6b', '#2f4d3a', '#7a6a4f'];
-
-// Illustrative starter data so the ledger isn't empty on first launch.
-// Dates are anchored relative to TODAY below — feel free to delete all
-// via Settings > Danger Zone once you're ready to use your own data.
-export const SEED = [
-  [4.5, -0, 'food', 'Coffee'],
-  [38.0, -0, 'fuel', 'Gas'],
-  [62.3, -1, 'food', 'Groceries'],
-  [24.0, -3, 'entertainment', 'Movie tickets'],
-  [15.75, -6, 'medicine', 'Pharmacy'],
-  [89.0, -5, 'bills', 'Electric bill'],
-  [1200.0, -9, 'rent', 'Rent'],
-  [54.0, -14, 'clothes', 'New shoes'],
-  [46.2, -27, 'eating_out', 'Dinner out'],
-  [1200.0, -40, 'rent', 'Rent'],
-  [85.0, -53, 'entertainment', 'Concert'],
-  [58.4, -63, 'food', 'Groceries'],
-  [210.0, -85, 'cars', 'Car repair'],
-  [1200.0, -101, 'rent', 'Rent'],
-  [40.0, -120, 'sports', 'Gym membership'],
-  [65.0, -155, 'gifts', 'Gift'],
-  [95.0, -171, 'bills', 'Utilities'],
-  [180.0, -200, 'gifts', 'Holiday shopping'],
-  [310.0, -239, 'travel', 'Flight ticket'],
-  [1200.0, -314, 'rent', 'Rent']
-];
-
 export const MONTHS = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
 
-export const MONTHS_BY_LANG = {
+export const MONTHS_BY_LANGUAGE = {
   en: MONTHS,
   sr: ['ЈАН', 'ФЕБ', 'МАР', 'АПР', 'МАЈ', 'ЈУН', 'ЈУЛ', 'АВГ', 'СЕП', 'ОКТ', 'НОВ', 'ДЕЦ'],
   ru: ['ЯНВ', 'ФЕВ', 'МАР', 'АПР', 'МАЙ', 'ИЮН', 'ИЮЛ', 'АВГ', 'СЕН', 'ОКТ', 'НОЯ', 'ДЕК']
 };
 
-export const CAT_NAMES_BY_LANG = {
+export const CATEGORY_NAMES_BY_LANGUAGE = {
   en: {
     bills: 'Bills',
     books: 'Books',
@@ -214,7 +141,7 @@ export const CAT_NAMES_BY_LANG = {
   }
 };
 
-export const I18N = {
+export const UI_TEXT = {
   en: {
     subtitle: '— EXPENSE LEDGER —',
     totalSpent: 'TOTAL SPENT',

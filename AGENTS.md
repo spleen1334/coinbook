@@ -14,8 +14,8 @@
 
 - `src/App.jsx`: class component that owns app state, persistence, import/export, derived view data, and screen orchestration.
 - `src/components/`: stateless presentational components for ledger, chart, settings, add/edit sheet, icons, and coin animation.
-- `src/data.js`: static category definitions, translations, swatches, seed data.
-- `src/utils.js`: pure helpers for dates, money formatting, CSV parsing/escaping, downloads, and coin styling.
+- `src/data/`: static category definitions, translations, swatches, seed data.
+- `src/utils/`: pure helpers for dates, money formatting, CSV parsing/escaping, downloads, and coin styling.
 - `src/App.css`: global styles, responsive layout, animations.
 - `public/icons/`: PWA icons referenced by manifest/service worker.
 - `docs/deployment.md`: GitHub Pages and PWA deployment notes.
@@ -40,7 +40,7 @@
 
 - Do not change behavior while moving code. Preserve storage schema, import/export shapes, generated ids, date formats, and screen interactions.
 - Continue splitting `App.jsx` only in small, mechanical steps with validation after each step.
-- Keep helpers pure when moving to `utils.js`; keep static copy/data in `data.js`.
+- Keep helpers pure when moving within `src/utils/`; keep static copy/data in `src/data/`.
 - Treat CSS class names as behavior-adjacent because animations and responsive states depend on them.
 
 ## Validation expectations

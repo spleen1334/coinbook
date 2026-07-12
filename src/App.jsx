@@ -1,24 +1,19 @@
 import React from 'react';
-import { CAT_DEFS, SWATCHES, SEED, MONTHS, MONTHS_BY_LANG, CAT_NAMES_BY_LANG, I18N } from './data.js';
+import { CATEGORY_DEFINITIONS, CATEGORY_SWATCHES } from './data/categories.js';
+import { DEMO_EXPENSES } from './data/demoExpenses.js';
+import { MONTHS, MONTHS_BY_LANGUAGE, CATEGORY_NAMES_BY_LANGUAGE, UI_TEXT } from './data/i18n.js';
 import { PeriodIcon } from './components/PeriodIcon.jsx';
 import { CoinScatter } from './components/CoinScatter.jsx';
 import { LedgerScreen } from './components/LedgerScreen.jsx';
 import { ChartScreen } from './components/ChartScreen.jsx';
 import { SettingsScreen } from './components/SettingsScreen.jsx';
 import { AddSheet } from './components/AddSheet.jsx';
-import {
-  pad,
-  isoOf,
-  defaultCatColor,
-  coinFace,
-  formatNum,
-  fmtMoney,
-  fmtShort,
-  downloadFile,
-  csvEscape,
-  fuzzyMatch,
-  parseCsv
-} from './utils.js';
+import { pad, isoOf, formatShortDate } from './utils/date.js';
+import { formatNumber, formatMoney } from './utils/money.js';
+import { csvEscape, parseCsv } from './utils/csv.js';
+import { downloadFile } from './utils/download.js';
+import { fuzzyMatch } from './utils/search.js';
+import { defaultCatColor, coinFace } from './utils/coin.js';
 
 const STORAGE_KEY = 'coinbook_v1_state';
 const TODAY = new Date();
@@ -27,7 +22,7 @@ const APP_BASE_URL = (import.meta.env.BASE_URL || '/').replace(/\/?$/, '/');
 const APP_ICON_URL = `${APP_BASE_URL}icons/icon.png`;
 
 function buildSeedExpenses() {
-  return SEED.map((s, i) => {
+  return DEMO_EXPENSES.map((s, i) => {
     const [amount, dayOffset, categoryId, note] = s;
     const d = new Date(TODAY);
     d.setDate(d.getDate() + dayOffset);
@@ -75,7 +70,7 @@ export default class App extends React.Component {
       swipingRowId: null,
       swipeRowOffset: 0,
       sheetClosing: false,
-      categories: CAT_DEFS.map((c, i) => ({ id: c.id, name: c.name, color: defaultCatColor(i) })),
+      categories: CATEGORY_DEFINITIONS.map((c, i) => ({ id: c.id, name: c.name, color: defaultCatColor(i) })),
       expenses: buildSeedExpenses()
     };
     try {
@@ -199,12 +194,12 @@ export default class App extends React.Component {
       d = TODAY.getDate();
     const off = this.state.periodOffset;
     const lang = this.state.language;
-    const t = I18N[lang] || I18N.en;
-    const months = MONTHS_BY_LANG[lang] || MONTHS;
+    const t = UI_TEXT[lang] || UI_TEXT.en;
+    const months = MONTHS_BY_LANGUAGE[lang] || MONTHS;
     switch (this.state.period) {
       case 'day': {
         const dt = new Date(y, m, d + off);
-        return off === 0 ? t.today : fmtShort(isoOf(dt), lang, MONTHS_BY_LANG, MONTHS);
+        return off === 0 ? t.today : formatShortDate(isoOf(dt), lang, MONTHS_BY_LANGUAGE, MONTHS);
       }
       case 'week': {
         const end = new Date(y, m, d + off * 7);
@@ -222,9 +217,9 @@ export default class App extends React.Component {
           );
         }
         return (
-          fmtShort(isoOf(start), lang, MONTHS_BY_LANG, MONTHS) +
+          formatShortDate(isoOf(start), lang, MONTHS_BY_LANGUAGE, MONTHS) +
           ' \u2013 ' +
-          fmtShort(isoOf(end), lang, MONTHS_BY_LANG, MONTHS)
+          formatShortDate(isoOf(end), lang, MONTHS_BY_LANGUAGE, MONTHS)
         );
       }
       case 'year':
@@ -251,7 +246,7 @@ export default class App extends React.Component {
         const hay = [
           e.note,
           this.catLabel(cat),
-          fmtShort(e.date, lang, MONTHS_BY_LANG, MONTHS),
+          formatShortDate(e.date, lang, MONTHS_BY_LANGUAGE, MONTHS),
           e.date,
           String(e.amount)
         ]
@@ -268,13 +263,13 @@ export default class App extends React.Component {
   }
 
   catLabel(cat) {
-    const names = CAT_NAMES_BY_LANG[this.state.language] || CAT_NAMES_BY_LANG.en;
+    const names = CATEGORY_NAMES_BY_LANGUAGE[this.state.language] || CATEGORY_NAMES_BY_LANGUAGE.en;
     return names[cat.id] || cat.name;
   }
 
   convertAndFormat(amount, cur) {
     const rate = (this.state.rates && this.state.rates[cur]) || 1;
-    return fmtMoney(amount * rate, cur, this.state.numberFormat);
+    return formatMoney(amount * rate, cur, this.state.numberFormat);
   }
 
   // ---------- total counter animation ----------
@@ -532,7 +527,8 @@ export default class App extends React.Component {
       categories.push({
         id,
         name,
-        color: c.color || SWATCHES[(categories.length - this.state.categories.length) % SWATCHES.length]
+        color:
+          c.color || CATEGORY_SWATCHES[(categories.length - this.state.categories.length) % CATEGORY_SWATCHES.length]
       });
     });
 
@@ -589,7 +585,7 @@ export default class App extends React.Component {
   confirmNewCategory = () => {
     const name = (this.state.newCatName || '').trim();
     if (!name) return;
-    const color = SWATCHES[this.state.newCatColor % SWATCHES.length];
+    const color = CATEGORY_SWATCHES[this.state.newCatColor % CATEGORY_SWATCHES.length];
     const id = 'custom_' + Date.now();
     this.setState((s) => ({
       categories: [...s.categories, { id, name, color }],
@@ -616,7 +612,7 @@ export default class App extends React.Component {
         editingId: null
       }));
       this.playChaChing();
-      this.showToast(I18N[this.state.language]?.savedToast || 'Saved');
+      this.showToast(UI_TEXT[this.state.language]?.savedToast || 'Saved');
     } else {
       const id = 'e' + Date.now();
       const entry = {
@@ -636,7 +632,7 @@ export default class App extends React.Component {
       }));
       this.playChaChing();
       this.showToast(
-        this.convertAndFormat(amt, this.state.currency) + ' ' + (I18N[this.state.language]?.addedToast || 'added')
+        this.convertAndFormat(amt, this.state.currency) + ' ' + (UI_TEXT[this.state.language]?.addedToast || 'added')
       );
     }
   };
@@ -680,7 +676,7 @@ export default class App extends React.Component {
     if (this.state.deleteAllText !== 'Yes') return;
     this.setState({
       expenses: [],
-      categories: CAT_DEFS.map((c, i) => ({ id: c.id, name: c.name, color: defaultCatColor(i) })),
+      categories: CATEGORY_DEFINITIONS.map((c, i) => ({ id: c.id, name: c.name, color: defaultCatColor(i) })),
       deleteAllOpen: false,
       deleteAllText: '',
       screen: 'settings'
@@ -692,7 +688,7 @@ export default class App extends React.Component {
   getViewData() {
     const lang = this.state.language;
     const cur = this.state.currency;
-    const t = I18N[lang] || I18N.en;
+    const t = UI_TEXT[lang] || UI_TEXT.en;
     const catById = {};
     this.state.categories.forEach((c) => {
       catById[c.id] = c;
@@ -718,7 +714,7 @@ export default class App extends React.Component {
         note: r.note,
         hasNote: !!r.note,
         amountStr: this.convertAndFormat(r.amount, cur),
-        dateShort: fmtShort(r.date, lang, MONTHS_BY_LANG, MONTHS),
+        dateShort: formatShortDate(r.date, lang, MONTHS_BY_LANGUAGE, MONTHS),
         stampAnim: r.id === this.state.lastAddedId ? 'cbStampIn 0.35s ease-out' : 'none',
         requestDelete: (e) => {
           if (e && e.stopPropagation) e.stopPropagation();
@@ -774,7 +770,7 @@ export default class App extends React.Component {
       });
       groupedList = Array.from(byDate.entries()).map(([date, rows]) => ({
         key: date,
-        dateLabel: fmtShort(date, lang, MONTHS_BY_LANG, MONTHS),
+        dateLabel: formatShortDate(date, lang, MONTHS_BY_LANGUAGE, MONTHS),
         showHeader: true,
         rows: rows.map((r) => ({ ...mkRow(r), showDateInline: false }))
       }));
@@ -859,7 +855,7 @@ export default class App extends React.Component {
     const selectedCatObj = catById[this.state.addCategoryId] || { id: 'unsure', name: "I don't know", color: '#888' };
     const selectedCatLabel = this.catLabel(selectedCatObj);
 
-    const swatches = SWATCHES.map((hex, i) => ({
+    const swatches = CATEGORY_SWATCHES.map((hex, i) => ({
       hex,
       select: () => this.setState({ newCatColor: i }),
       border: this.state.newCatColor === i ? '3px solid ' + ink : '1px solid rgba(0,0,0,0.2)'
@@ -936,7 +932,7 @@ export default class App extends React.Component {
       bg: numberFormat.decimalChar === o.id ? nfActive : nfInactive,
       fg: numberFormat.decimalChar === o.id ? paperFg : ink
     }));
-    const numberFormatPreview = formatNum(1234.5, numberFormat);
+    const numberFormatPreview = formatNumber(1234.5, numberFormat);
 
     return {
       lang,
@@ -1194,7 +1190,7 @@ export default class App extends React.Component {
                   {v.deleteEntry ? this.convertAndFormat(v.deleteEntry.amount, s.currency) : ''}
                 </div>
                 <div style={{ fontSize: 12, color: '#8a7355', marginBottom: 18 }}>
-                  {v.deleteEntry ? fmtShort(v.deleteEntry.date, s.language, MONTHS_BY_LANG, MONTHS) : ''}
+                  {v.deleteEntry ? formatShortDate(v.deleteEntry.date, s.language, MONTHS_BY_LANGUAGE, MONTHS) : ''}
                 </div>
                 <div style={{ display: 'flex', gap: 10 }}>
                   <div className="cb-modal-btn cb-modal-btn-danger hover-lift" onClick={this.confirmDeleteModal}>

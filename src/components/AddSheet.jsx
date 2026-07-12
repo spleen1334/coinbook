@@ -1,4 +1,4 @@
-import { coinFace } from '../utils.js';
+import { coinFace } from '../utils/coin.js';
 
 export function AddSheet({ app, s, v, t }) {
   return (

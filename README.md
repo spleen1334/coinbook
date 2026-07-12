@@ -44,8 +44,8 @@ coinbook-pwa/
     App.jsx           Class app shell: state, persistence, handlers, derived view data
     components/       Stateless presentational screens and shared UI pieces
     App.css           Global styles and animations
-    data.js           Static categories, translations, seed entries
-    utils.js          Shared helpers for dates, money, CSV, downloads, visuals
+    data/             Static categories, translations, seed entries
+    utils/            Shared helpers for dates, money, CSV, downloads, visuals
   docs/deployment.md  GitHub Pages and PWA deployment notes
 ```
 
