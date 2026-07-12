@@ -10,6 +10,8 @@ import {
 const STORAGE_KEY = 'coinbook_v1_state';
 const TODAY = new Date();
 const CIRC = 2 * Math.PI * 38;
+const APP_BASE_URL = (import.meta.env.BASE_URL || '/').replace(/\/?$/, '/');
+const APP_ICON_URL = `${APP_BASE_URL}icons/icon.png`;
 
 function buildSeedExpenses() {
   return SEED.map((s, i) => {
@@ -723,7 +725,7 @@ export default class App extends React.Component {
             <div className="cb-splash" style={{ opacity: s.splashFadingOut ? 0 : 1 }}>
               <div className="cb-splash-badge">
                 <div className="cb-splash-ring" />
-                <img src="/icons/icon.png" width="88" height="88" className="cb-splash-icon" alt="" />
+                <img src={APP_ICON_URL} width="88" height="88" className="cb-splash-icon" alt="" />
               </div>
               <div className="cb-splash-title">COIN BOOK</div>
               <div className="cb-splash-sub">— EXPENSE LEDGER —</div>
@@ -741,7 +743,7 @@ export default class App extends React.Component {
               )}
 
               <div className="cb-brand">
-                <img src="/icons/icon.png" width="58" height="58" className="cb-brand-icon" alt="Coin Book" />
+                <img src={APP_ICON_URL} width="58" height="58" className="cb-brand-icon" alt="Coin Book" />
                 <div style={{ textAlign: 'left' }}>
                   <div className="cb-brand-title">COIN BOOK</div>
                   <div className="cb-brand-sub">{t.subtitle}</div>
@@ -1163,4 +1165,3 @@ function AddSheet({ app, s, v, t }) {
     </>
   );
 }
-
