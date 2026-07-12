@@ -1,52 +1,70 @@
 # Coin Book — Expense Ledger (React + PWA)
 
-A ledger-styled expense tracker: multi-currency, multi-language (EN/SR/RU), day/week/month/year views, a category donut chart, CSV/JSON import-export, and a customizable number format. All data is stored locally in the browser via `localStorage` — nothing leaves the device.
+A ledger-styled expense tracker with multi-currency support, EN/SR/RU UI text, day/week/month/year views, a category donut chart, CSV/JSON import-export, and configurable number formatting. Data stays in the browser through `localStorage`.
 
-This is a real React app (Vite) exported from the original interactive prototype, and configured as an installable Progressive Web App (works offline, "Add to Home Screen" on mobile).
+The app is a Vite + React Progressive Web App using `vite-plugin-pwa`. It can be built as a static site and installed from HTTPS or localhost.
 
-## Getting started
+## Commands
 
 ```bash
 npm install
 npm run dev
-```
-
-Open the printed local URL (usually `http://localhost:5173`). On your phone, open the same URL from your computer's LAN IP (or deploy it — see below) and use the browser's "Add to Home Screen" / install prompt to install it as a standalone app.
-
-## Building for production / installing as a PWA
-
-```bash
 npm run build
 npm run preview
 ```
 
-`npm run build` outputs a static `dist/` folder (deployable to Vercel, Netlify, GitHub Pages, any static host, or just opened locally). Once served over `https://` (or `localhost`), mobile browsers will offer to install it as an app — it'll get its own icon, launch full-screen, and keep working offline thanks to the generated service worker.
+Quality/formatting commands:
+
+```bash
+npm run lint
+npm run lint:fix
+npm run format
+npm run format:check
+npm run check
+```
+
+GitHub Pages project-site deployment:
+
+```bash
+npm run build:pages
+npm run deploy
+```
 
 ## Project structure
 
-```
+```text
 coinbook-pwa/
-  index.html          Vite entry HTML (fonts, manifest link, theme color)
-  vite.config.js       Vite + vite-plugin-pwa config (manifest + service worker)
-  public/icons/        App icons (192px, 512px, and the original source icon)
+  index.html          Vite entry HTML
+  vite.config.js      Vite, React, PWA manifest/service worker config
+  public/icons/       PWA icons
   src/
-    main.jsx           React root
-    App.jsx            The whole app: state, logic, and rendering
-    App.css            All styles (including every animation/keyframe)
-    data.js            Static data: category list, translations, starter/seed entries
-    utils.js           Small pure helpers (money formatting, CSV parsing, dates, etc.)
+    main.jsx          React root
+    App.jsx           Current monolithic app: state, logic, screens, rendering
+    App.css           Global styles and animations
+    data.js           Static categories, translations, seed entries
+    utils.js          Shared helpers for dates, money, CSV, downloads, visuals
+  docs/               Architecture, deployment, data-format, formatting notes
 ```
 
-Everything lives in one `App.jsx` component (class component, mirroring the original design prototype's structure) for straightforward readability — feel free to split it into smaller components as the app grows.
+Component splitting is planned but not currently done: `src/App.jsx` still owns most UI, state transitions, persistence, and import/export behavior.
 
-## Data & storage
+## Data and storage
 
-- All expenses, categories, currency/rate settings, language, and number-format preferences are persisted to `localStorage` under the key `coinbook_v1_state`.
-- The app ships with ~20 illustrative starter entries (seeded relative to today's date) so the ledger isn't empty on first launch. Clear them anytime via **Settings → Danger Zone → Delete All Data**.
-- **Export JSON / Export CSV** (in Settings) download your data; **Import JSON / Import CSV** merge data back in (new categories are created automatically on import).
+- Runtime persistence uses `localStorage` key `coinbook_v1_state`.
+- Stored state includes expenses, categories, language, currency, rates, number format, list grouping, and selected period.
+- JSON export intentionally includes only `{ categories, expenses }`.
+- CSV import/export columns are `date,category,amount,note`.
 
-## Notes for further development
+See [docs/data-format.md](docs/data-format.md) for exact shapes.
 
-- Hover/press states are plain CSS (`:hover` / `:active` classes in `App.css`) rather than JS-tracked state, for performance.
-- The coin-styled category badges use a small `coinFace()` gradient helper (`src/utils.js`) applied over any flat category color — reuse it for new UI that needs the same coin look.
-- The total-spent counter animates via `requestAnimationFrame` with a `setTimeout` safety net so it never gets stuck mid-count if the tab is backgrounded/throttled.
+## Documentation
+
+- [Architecture](docs/architecture.md)
+- [Deployment](docs/deployment.md)
+- [Data format](docs/data-format.md)
+- [Formatting](docs/formatting.md)
+
+## Notes
+
+- No automated tests currently exist. Use lint, format check, and production build as validation.
+- GitHub Pages project builds require `VITE_BASE_PATH=/coinbook-pwa/`; see deployment docs for root/custom-domain notes.
