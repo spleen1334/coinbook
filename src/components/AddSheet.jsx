@@ -28,6 +28,9 @@ export function AddSheet({ app, s, v, t }) {
           <div className="cb-field-label">{t.amount}</div>
           <input
             type="number"
+            name="amount"
+            inputMode="decimal"
+            enterKeyHint="done"
             step="0.01"
             min="0"
             placeholder="0.00"
@@ -37,7 +40,13 @@ export function AddSheet({ app, s, v, t }) {
           />
 
           <div className="cb-field-label">{t.date}</div>
-          <input type="date" value={s.addDate} onChange={app.onDateInput} className="cb-input cb-input-date" />
+          <input
+            type="date"
+            name="date"
+            value={s.addDate}
+            onChange={app.onDateInput}
+            className="cb-input cb-input-date"
+          />
 
           <div className="cb-field-label">{t.category}</div>
           <div className="cb-category-select hover-lift" onClick={app.toggleCategoryPicker}>
