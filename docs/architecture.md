@@ -4,8 +4,8 @@ Coin Book is a static Vite + React PWA. `src/main.jsx` mounts the app, `vite.con
 
 ## App shell
 
-- `src/App.jsx` is currently a single React class component.
-- It renders the PWA shell, splash state, home ledger, graph view, settings view, add/edit flows, category picker, and import/export controls.
+- `src/App.jsx` is a React class component that orchestrates app state and screens.
+- `src/components/` contains stateless presentational components for the ledger, graph view, settings view, add/edit sheet, icons, and coin animation.
 - Navigation is internal state (`screen`, period selection, offsets), not a router.
 
 ## State responsibilities
@@ -49,7 +49,7 @@ State is persisted to `localStorage` under `coinbook_v1_state`. The saved object
 
 ## Known maintainability risks
 
-- `App.jsx` mixes rendering, state transitions, persistence, data transformation, and UI effects.
+- `App.jsx` still mixes state transitions, persistence, data transformation, and UI effects.
 - Large CSS and JSX coupling makes broad renames risky.
 - Import/export and storage formats are implicit compatibility contracts.
 - There is no automated test suite; rely on lint, formatting, builds, and manual smoke checks.

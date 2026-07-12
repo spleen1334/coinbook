@@ -11,7 +11,8 @@
 
 ## Project structure
 
-- `src/App.jsx`: current monolithic class component; owns app state, persistence, import/export, screens, and most rendering.
+- `src/App.jsx`: class component that owns app state, persistence, import/export, derived view data, and screen orchestration.
+- `src/components/`: stateless presentational components for ledger, chart, settings, add/edit sheet, icons, and coin animation.
 - `src/data.js`: static category definitions, translations, swatches, seed data.
 - `src/utils.js`: pure helpers for dates, money formatting, CSV parsing/escaping, downloads, and coin styling.
 - `src/App.css`: global styles, responsive layout, animations.
@@ -37,7 +38,7 @@
 ## Safe refactor guidance
 
 - Do not change behavior while moving code. Preserve storage schema, import/export shapes, generated ids, date formats, and screen interactions.
-- Split `App.jsx` only in small, mechanical steps with validation after each step.
+- Continue splitting `App.jsx` only in small, mechanical steps with validation after each step.
 - Keep helpers pure when moving to `utils.js`; keep static copy/data in `data.js`.
 - Treat CSS class names as behavior-adjacent because animations and responsive states depend on them.
 

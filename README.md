@@ -39,14 +39,15 @@ coinbook-pwa/
   public/icons/       PWA icons
   src/
     main.jsx          React root
-    App.jsx           Current monolithic app: state, logic, screens, rendering
+    App.jsx           Class app shell: state, persistence, handlers, derived view data
+    components/       Stateless presentational screens and shared UI pieces
     App.css           Global styles and animations
     data.js           Static categories, translations, seed entries
     utils.js          Shared helpers for dates, money, CSV, downloads, visuals
   docs/               Architecture, deployment, data-format, formatting notes
 ```
 
-Component splitting is planned but not currently done: `src/App.jsx` still owns most UI, state transitions, persistence, and import/export behavior.
+The first component split is complete: `src/components/` contains stateless presentational screens and UI pieces. `src/App.jsx` still owns state transitions, persistence, derived view data, and import/export behavior.
 
 ## Data and storage
 
