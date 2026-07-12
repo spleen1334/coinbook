@@ -933,6 +933,12 @@ a:hover {
   animation: cbToastIn 0.2s ease-out;
   white-space: nowrap;
 }
+.cb-toast-success {
+  background: #2f6b52;
+}
+.cb-toast-error {
+  background: #b5432e;
+}
 
 /* ---- search popup ---- */
 .cb-scrim {

@@ -61,6 +61,7 @@ export default class App extends React.Component {
       deleteAllText: '',
       categoryPickerOpen: false,
       toastMsg: null,
+      toastVariant: 'success',
       showSplash: true,
       splashFadingOut: false,
       displayedTotal: 0,
@@ -316,10 +317,10 @@ export default class App extends React.Component {
     }
   }
 
-  showToast = (msg) => {
+  showToast = (msg, variant = 'success') => {
     if (this._toastTimer) clearTimeout(this._toastTimer);
-    this.setState({ toastMsg: msg });
-    this._toastTimer = setTimeout(() => this.setState({ toastMsg: null }), 1800);
+    this.setState({ toastMsg: msg, toastVariant: variant });
+    this._toastTimer = setTimeout(() => this.setState({ toastMsg: null, toastVariant: 'success' }), 1800);
   };
 
   // ---------- navigation & period ----------
@@ -412,7 +413,7 @@ export default class App extends React.Component {
         );
         this.setState((s) => ({ categories, expenses: [...imported, ...s.expenses] }));
       } catch (err) {
-        this.showToast('Import failed');
+        this.showToast('Import failed', 'error');
       }
     };
     reader.readAsText(file);
@@ -432,7 +433,7 @@ export default class App extends React.Component {
         );
         this.setState((s) => ({ categories, expenses: [...imported, ...s.expenses] }));
       } catch (err) {
-        this.showToast('Import failed');
+        this.showToast('Import failed', 'error');
       }
     };
     reader.readAsText(file);
@@ -1053,7 +1054,11 @@ export default class App extends React.Component {
             </div>
           </div>
 
-          {s.toastMsg && <div className="cb-toast">✓ {s.toastMsg}</div>}
+          {s.toastMsg && (
+            <div className={`cb-toast cb-toast-${s.toastVariant}`}>
+              {s.toastVariant === 'error' ? '!' : '✓'} {s.toastMsg}
+            </div>
+          )}
 
           {s.searchOpen && (
             <>
