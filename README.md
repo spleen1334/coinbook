@@ -68,4 +68,4 @@ The first component split is complete: `src/components/` contains stateless pres
 
 - Formatting uses Prettier: single quotes, semicolons, no trailing commas, 120-character print width.
 - No automated tests currently exist. Use lint, format check, and production build as validation.
-- GitHub Pages project builds require `VITE_BASE_PATH=/coinbook-pwa/`; see deployment docs for root/custom-domain notes.
+- GitHub Pages project builds require `VITE_BASE_PATH=/coinbook/`; see deployment docs for root/custom-domain notes.

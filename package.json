@@ -9,7 +9,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "build:pages": "VITE_BASE_PATH=/coinbook-pwa/ vite build",
+    "build:pages": "VITE_BASE_PATH=/coinbook/ vite build",
     "deploy": "npm run build:pages && gh-pages -d dist",
     "preview": "vite preview",
     "lint": "eslint .",

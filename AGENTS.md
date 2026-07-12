@@ -33,7 +33,7 @@
 ## PWA and base-path caveats
 
 - `vite.config.js` derives `base`, manifest `start_url`, and manifest `scope` from `VITE_BASE_PATH`.
-- GitHub Pages project-site builds use `VITE_BASE_PATH=/coinbook-pwa/` via `npm run build:pages`.
+- GitHub Pages project-site builds use `VITE_BASE_PATH=/coinbook/` via `npm run build:pages`.
 - Root/custom-domain deploys should use the default `/` base.
 - Avoid hard-coded root asset paths; use Vite/base-aware URLs where needed.
 - Service workers can serve stale cached assets after deploy; verify with a hard refresh, unregistering the SW, or clearing site data if behavior looks outdated.

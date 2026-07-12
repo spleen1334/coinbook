@@ -12,13 +12,13 @@ npm run preview
 
 ## GitHub Pages project site
 
-For a project site at `https://<user>.github.io/coinbook-pwa/`, build with the project base path:
+For the project site at `https://spleen1334.github.io/coinbook/`, build with the project base path:
 
 ```bash
 npm run build:pages
 ```
 
-This sets `VITE_BASE_PATH=/coinbook-pwa/`, which Vite uses for asset URLs and the PWA manifest `start_url`/`scope`.
+This sets `VITE_BASE_PATH=/coinbook/`, which Vite uses for asset URLs and the PWA manifest `start_url`/`scope`.
 
 Deploy with:
 
@@ -50,4 +50,4 @@ The app uses a generated service worker with auto-update. If a deployed change a
 
 ## Built-output checks
 
-After building for a subpath, inspect generated `dist/` HTML/manifest references for accidental root paths such as `/assets/...` or `/icons/...` when they should include `/coinbook-pwa/`. Root/custom-domain builds should use `/` paths.
+After building for a subpath, inspect generated `dist/` HTML/manifest references for accidental root paths such as `/assets/...` or `/icons/...` when they should include `/coinbook/`. Root/custom-domain builds should use `/` paths.
