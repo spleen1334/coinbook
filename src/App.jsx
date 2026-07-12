@@ -455,7 +455,7 @@ export default class App extends React.Component {
           id: 'imp' + Date.now() + '_' + i,
           amount: parseFloat(r.amount) || 0,
           date: r.date || isoOf(TODAY),
-          categoryId: catByName[(r.category || '').toLowerCase()] || catById[r.categoryId] || 'other',
+          categoryId: catByName[(r.category || '').trim().toLowerCase()] || catById[r.categoryId] || 'other',
           note: r.note || ''
         }));
         this.setState((s) => ({ categories, expenses: [...imported, ...s.expenses] }));
@@ -489,7 +489,7 @@ export default class App extends React.Component {
           id: 'imp' + Date.now() + '_' + i,
           amount: parseFloat(r[aIdx]) || 0,
           date: r[dIdx] || isoOf(TODAY),
-          categoryId: catByName[(r[cIdx] || '').toLowerCase()] || 'other',
+          categoryId: catByName[(r[cIdx] || '').trim().toLowerCase()] || 'other',
           note: r[nIdx] || ''
         }));
         this.setState((s) => ({ categories, expenses: [...imported, ...s.expenses] }));
