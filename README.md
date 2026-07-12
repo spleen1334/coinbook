@@ -6,6 +6,8 @@ The app is a Vite + React Progressive Web App using `vite-plugin-pwa`. It can be
 
 ## Commands
 
+Requires Node 20.19+.
+
 ```bash
 npm install
 npm run dev

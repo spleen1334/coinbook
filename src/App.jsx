@@ -450,19 +450,15 @@ export default class App extends React.Component {
     reader.onload = () => {
       try {
         const data = JSON.parse(reader.result);
-        this.mergeImportedCategories(data.categories || []);
-        const catByName = {};
-        this.state.categories.forEach((c) => {
-          catByName[c.name.toLowerCase()] = c.id;
-        });
+        const { categories, catByName, catById } = this.getImportedCategoryMerge(data.categories || []);
         const imported = (data.expenses || []).map((r, i) => ({
           id: 'imp' + Date.now() + '_' + i,
           amount: parseFloat(r.amount) || 0,
           date: r.date || isoOf(TODAY),
-          categoryId: catByName[(r.category || '').toLowerCase()] || r.categoryId || 'other',
+          categoryId: catByName[(r.category || '').toLowerCase()] || catById[r.categoryId] || 'other',
           note: r.note || ''
         }));
-        this.setState((s) => ({ expenses: [...imported, ...s.expenses] }));
+        this.setState((s) => ({ categories, expenses: [...imported, ...s.expenses] }));
       } catch (err) {
         /* ignore malformed file */
       }
@@ -488,11 +484,7 @@ export default class App extends React.Component {
             .map((r) => (r[cIdx] || '').trim())
             .filter(Boolean)
         );
-        this.mergeImportedCategories(Array.from(catNames).map((name) => ({ name })));
-        const catByName = {};
-        this.state.categories.forEach((c) => {
-          catByName[c.name.toLowerCase()] = c.id;
-        });
+        const { categories, catByName } = this.getImportedCategoryMerge(Array.from(catNames).map((name) => ({ name })));
         const imported = rows.slice(1).map((r, i) => ({
           id: 'imp' + Date.now() + '_' + i,
           amount: parseFloat(r[aIdx]) || 0,
@@ -500,7 +492,7 @@ export default class App extends React.Component {
           categoryId: catByName[(r[cIdx] || '').toLowerCase()] || 'other',
           note: r[nIdx] || ''
         }));
-        this.setState((s) => ({ expenses: [...imported, ...s.expenses] }));
+        this.setState((s) => ({ categories, expenses: [...imported, ...s.expenses] }));
       } catch (err) {
         /* ignore malformed file */
       }
@@ -508,21 +500,43 @@ export default class App extends React.Component {
     reader.readAsText(file);
     e.target.value = '';
   };
-  mergeImportedCategories(list) {
-    const existingNames = new Set(this.state.categories.map((c) => c.name.toLowerCase()));
-    const toAdd = [];
+  getImportedCategoryMerge(list) {
+    const categories = [...this.state.categories];
+    const catByName = {};
+    const catById = {};
+    const usedIds = new Set();
+
+    categories.forEach((c) => {
+      catByName[c.name.toLowerCase()] = c.id;
+      catById[c.id] = c.id;
+      usedIds.add(c.id);
+    });
+
+    const importTick = Date.now();
     list.forEach((c, i) => {
       const name = (c.name || '').trim();
-      if (name && !existingNames.has(name.toLowerCase())) {
-        existingNames.add(name.toLowerCase());
-        toAdd.push({
-          id: 'custom_' + Date.now() + '_' + i,
-          name,
-          color: SWATCHES[(this.state.categories.length + toAdd.length) % SWATCHES.length]
-        });
+      if (!name) return;
+
+      const sourceId = c.id || '';
+      const nameKey = name.toLowerCase();
+      if (catByName[nameKey]) {
+        if (sourceId) catById[sourceId] = catByName[nameKey];
+        return;
       }
+
+      const id = sourceId && !usedIds.has(sourceId) ? sourceId : 'custom_' + importTick + '_' + i;
+      usedIds.add(id);
+      catByName[nameKey] = id;
+      if (sourceId) catById[sourceId] = id;
+      catById[id] = id;
+      categories.push({
+        id,
+        name,
+        color: c.color || SWATCHES[(categories.length - this.state.categories.length) % SWATCHES.length]
+      });
     });
-    if (toAdd.length) this.setState((s) => ({ categories: [...s.categories, ...toAdd] }));
+
+    return { categories, catByName, catById };
   }
 
   // ---------- add / edit sheet ----------

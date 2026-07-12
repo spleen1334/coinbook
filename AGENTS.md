@@ -3,6 +3,7 @@
 ## Stack and commands
 
 - Vite 6 + React 18 PWA, configured in `vite.config.js` with `vite-plugin-pwa`.
+- Node 20.19+ is required by the Vite/React plugin toolchain.
 - Install/dev: `npm install`, `npm run dev`.
 - Build/preview: `npm run build`, `npm run preview`.
 - GitHub Pages project build/deploy: `npm run build:pages`, `npm run deploy`.
