@@ -133,7 +133,9 @@ export default class App extends React.Component {
     };
 
     const newTotal = this.computeFilteredTotal();
-    if (this._lastTotal === undefined || Math.abs(newTotal - this._lastTotal) > 1e-9) {
+    const shouldReplayExpenseAnimation = this._replayExpenseAnimation;
+    this._replayExpenseAnimation = false;
+    if (this._lastTotal === undefined || Math.abs(newTotal - this._lastTotal) > 1e-9 || shouldReplayExpenseAnimation) {
       this._lastTotal = newTotal;
       this.animateTotal(newTotal, this._countFromZero);
       this._countFromZero = false;
@@ -387,6 +389,10 @@ export default class App extends React.Component {
   };
   setNumberFormat = (patch) => this.setState((s) => ({ numberFormat: { ...s.numberFormat, ...patch } }));
 
+  requestExpenseTotalReplay() {
+    this._replayExpenseAnimation = true;
+  }
+
   // ---------- import / export ----------
 
   exportJson = () => {
@@ -411,6 +417,7 @@ export default class App extends React.Component {
           CATEGORY_SWATCHES,
           isoOf(TODAY)
         );
+        this.requestExpenseTotalReplay();
         this.setState((s) => ({ categories, expenses: [...imported, ...s.expenses] }));
       } catch (err) {
         this.showToast('Import failed', 'error');
@@ -431,6 +438,7 @@ export default class App extends React.Component {
           CATEGORY_SWATCHES,
           isoOf(TODAY)
         );
+        this.requestExpenseTotalReplay();
         this.setState((s) => ({ categories, expenses: [...imported, ...s.expenses] }));
       } catch (err) {
         this.showToast('Import failed', 'error');
@@ -502,6 +510,7 @@ export default class App extends React.Component {
   submitAdd = () => {
     const amt = parseFloat(this.state.addAmount);
     if (!amt || amt <= 0) return;
+    this.requestExpenseTotalReplay();
     if (this.state.editingId) {
       const editId = this.state.editingId;
       const date = this.state.addDate || isoOf(TODAY);
@@ -543,8 +552,10 @@ export default class App extends React.Component {
 
   requestDelete = (id) => this.setState({ deleteModalId: id });
   cancelDeleteModal = () => this.setState({ deleteModalId: null });
-  confirmDeleteModal = () =>
+  confirmDeleteModal = () => {
+    this.requestExpenseTotalReplay();
     this.setState((s) => ({ expenses: s.expenses.filter((e) => e.id !== s.deleteModalId), deleteModalId: null }));
+  };
 
   // ---------- swipe-to-delete on rows ----------
 
@@ -578,6 +589,7 @@ export default class App extends React.Component {
   onDeleteAllTextInput = (e) => this.setState({ deleteAllText: e.target.value });
   confirmDeleteAll = () => {
     if (this.state.deleteAllText !== 'Yes') return;
+    this.requestExpenseTotalReplay();
     this.setState({
       expenses: [],
       categories: CATEGORY_DEFINITIONS.map((c, i) => ({ id: c.id, name: c.name, color: defaultCatColor(i) })),
