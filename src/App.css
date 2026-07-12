@@ -1231,7 +1231,7 @@ a:hover {
   background: #f4ecd8;
   border-top: 3px solid #2c2416;
   border-radius: 18px 18px 0 0;
-  z-index: 41;
+  z-index: 51;
   overflow-y: auto;
   box-shadow: 0 -8px 30px rgba(0, 0, 0, 0.3);
 }
