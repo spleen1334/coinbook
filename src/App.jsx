@@ -10,12 +10,13 @@ import { SettingsScreen } from './components/SettingsScreen.jsx';
 import { AddSheet } from './components/AddSheet.jsx';
 import { pad, isoOf, formatShortDate } from './utils/date.js';
 import { formatNumber, formatMoney } from './utils/money.js';
-import { csvEscape, parseCsv } from './utils/csv.js';
 import { downloadFile } from './utils/download.js';
 import { fuzzyMatch } from './utils/search.js';
 import { defaultCatColor, coinFace } from './utils/coin.js';
+import { loadPersistedState, savePersistedState } from './persistence/localState.js';
+import { buildJsonExport, parseJsonImport } from './importExport/json.js';
+import { buildCsvExport, parseCsvImport } from './importExport/csv.js';
 
-const STORAGE_KEY = 'coinbook_v1_state';
 const TODAY = new Date();
 const CIRC = 2 * Math.PI * 38;
 const APP_BASE_URL = (import.meta.env.BASE_URL || '/').replace(/\/?$/, '/');
@@ -73,22 +74,7 @@ export default class App extends React.Component {
       categories: CATEGORY_DEFINITIONS.map((c, i) => ({ id: c.id, name: c.name, color: defaultCatColor(i) })),
       expenses: buildSeedExpenses()
     };
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) {
-        const saved = JSON.parse(raw);
-        if (Array.isArray(saved.expenses)) this.state.expenses = saved.expenses;
-        if (Array.isArray(saved.categories)) this.state.categories = saved.categories;
-        if (saved.language) this.state.language = saved.language;
-        if (saved.currency) this.state.currency = saved.currency;
-        if (saved.rates) this.state.rates = saved.rates;
-        if (saved.numberFormat) this.state.numberFormat = saved.numberFormat;
-        if (saved.listGrouping) this.state.listGrouping = saved.listGrouping;
-        if (saved.period) this.state.period = saved.period;
-      }
-    } catch (err) {
-      /* ignore corrupt/unavailable storage */
-    }
+    Object.assign(this.state, loadPersistedState());
   }
 
   componentDidMount() {
@@ -132,7 +118,7 @@ export default class App extends React.Component {
       prev.listGrouping !== s.listGrouping ||
       prev.period !== s.period
     ) {
-      this.persist();
+      savePersistedState(s);
     }
     this._persistSnapshot = {
       expenses: s.expenses,
@@ -336,26 +322,6 @@ export default class App extends React.Component {
     this._toastTimer = setTimeout(() => this.setState({ toastMsg: null }), 1800);
   };
 
-  persist() {
-    try {
-      localStorage.setItem(
-        STORAGE_KEY,
-        JSON.stringify({
-          expenses: this.state.expenses,
-          categories: this.state.categories,
-          language: this.state.language,
-          currency: this.state.currency,
-          rates: this.state.rates,
-          numberFormat: this.state.numberFormat,
-          listGrouping: this.state.listGrouping,
-          period: this.state.period
-        })
-      );
-    } catch (err) {
-      /* storage unavailable (private mode, quota) */
-    }
-  }
-
   // ---------- navigation & period ----------
 
   selectPeriod = (p) => {
@@ -423,20 +389,14 @@ export default class App extends React.Component {
   // ---------- import / export ----------
 
   exportJson = () => {
-    const payload = { categories: this.state.categories, expenses: this.state.expenses };
-    downloadFile(JSON.stringify(payload, null, 2), 'coinbook-export.json', 'application/json');
+    downloadFile(
+      buildJsonExport(this.state.categories, this.state.expenses),
+      'coinbook-export.json',
+      'application/json'
+    );
   };
   exportCsv = () => {
-    const catById = {};
-    this.state.categories.forEach((c) => {
-      catById[c.id] = c;
-    });
-    const rows = [['date', 'category', 'amount', 'note']];
-    this.state.expenses.forEach((e) => {
-      rows.push([e.date, (catById[e.categoryId] || { name: 'Other' }).name, e.amount.toFixed(2), e.note || '']);
-    });
-    const csv = rows.map((r) => r.map(csvEscape).join(',')).join('\n');
-    downloadFile(csv, 'coinbook-export.csv', 'text/csv');
+    downloadFile(buildCsvExport(this.state.categories, this.state.expenses), 'coinbook-export.csv', 'text/csv');
   };
   onImportJsonFile = (e) => {
     const file = e.target.files && e.target.files[0];
@@ -444,18 +404,15 @@ export default class App extends React.Component {
     const reader = new FileReader();
     reader.onload = () => {
       try {
-        const data = JSON.parse(reader.result);
-        const { categories, catByName, catById } = this.getImportedCategoryMerge(data.categories || []);
-        const imported = (data.expenses || []).map((r, i) => ({
-          id: 'imp' + Date.now() + '_' + i,
-          amount: parseFloat(r.amount) || 0,
-          date: r.date || isoOf(TODAY),
-          categoryId: catByName[(r.category || '').trim().toLowerCase()] || catById[r.categoryId] || 'other',
-          note: r.note || ''
-        }));
+        const { categories, expenses: imported } = parseJsonImport(
+          reader.result,
+          this.state.categories,
+          CATEGORY_SWATCHES,
+          isoOf(TODAY)
+        );
         this.setState((s) => ({ categories, expenses: [...imported, ...s.expenses] }));
       } catch (err) {
-        /* ignore malformed file */
+        this.showToast('Import failed');
       }
     };
     reader.readAsText(file);
@@ -467,74 +424,20 @@ export default class App extends React.Component {
     const reader = new FileReader();
     reader.onload = () => {
       try {
-        const rows = parseCsv(reader.result);
-        const header = rows[0].map((h) => h.trim().toLowerCase());
-        const dIdx = header.indexOf('date'),
-          cIdx = header.indexOf('category'),
-          aIdx = header.indexOf('amount'),
-          nIdx = header.indexOf('note');
-        const catNames = new Set(
-          rows
-            .slice(1)
-            .map((r) => (r[cIdx] || '').trim())
-            .filter(Boolean)
+        const { categories, expenses: imported } = parseCsvImport(
+          reader.result,
+          this.state.categories,
+          CATEGORY_SWATCHES,
+          isoOf(TODAY)
         );
-        const { categories, catByName } = this.getImportedCategoryMerge(Array.from(catNames).map((name) => ({ name })));
-        const imported = rows.slice(1).map((r, i) => ({
-          id: 'imp' + Date.now() + '_' + i,
-          amount: parseFloat(r[aIdx]) || 0,
-          date: r[dIdx] || isoOf(TODAY),
-          categoryId: catByName[(r[cIdx] || '').trim().toLowerCase()] || 'other',
-          note: r[nIdx] || ''
-        }));
         this.setState((s) => ({ categories, expenses: [...imported, ...s.expenses] }));
       } catch (err) {
-        /* ignore malformed file */
+        this.showToast('Import failed');
       }
     };
     reader.readAsText(file);
     e.target.value = '';
   };
-  getImportedCategoryMerge(list) {
-    const categories = [...this.state.categories];
-    const catByName = {};
-    const catById = {};
-    const usedIds = new Set();
-
-    categories.forEach((c) => {
-      catByName[c.name.toLowerCase()] = c.id;
-      catById[c.id] = c.id;
-      usedIds.add(c.id);
-    });
-
-    const importTick = Date.now();
-    list.forEach((c, i) => {
-      const name = (c.name || '').trim();
-      if (!name) return;
-
-      const sourceId = c.id || '';
-      const nameKey = name.toLowerCase();
-      if (catByName[nameKey]) {
-        if (sourceId) catById[sourceId] = catByName[nameKey];
-        return;
-      }
-
-      const id = sourceId && !usedIds.has(sourceId) ? sourceId : 'custom_' + importTick + '_' + i;
-      usedIds.add(id);
-      catByName[nameKey] = id;
-      if (sourceId) catById[sourceId] = id;
-      catById[id] = id;
-      categories.push({
-        id,
-        name,
-        color:
-          c.color || CATEGORY_SWATCHES[(categories.length - this.state.categories.length) % CATEGORY_SWATCHES.length]
-      });
-    });
-
-    return { categories, catByName, catById };
-  }
-
   // ---------- add / edit sheet ----------
 
   openAdd = () =>

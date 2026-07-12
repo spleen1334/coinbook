@@ -45,11 +45,13 @@ coinbook-pwa/
     components/       Stateless presentational screens and shared UI pieces
     App.css           Global styles and animations
     data/             Static categories, translations, seed entries
+    persistence/      Local storage load/save helpers
+    importExport/     JSON/CSV import-export and category merge helpers
     utils/            Shared helpers for dates, money, CSV, downloads, visuals
   docs/deployment.md  GitHub Pages and PWA deployment notes
 ```
 
-The first component split is complete: `src/components/` contains stateless presentational screens and UI pieces. `src/App.jsx` still owns state transitions, persistence, derived view data, and import/export behavior.
+The first component split is complete: `src/components/` contains stateless presentational screens and UI pieces. `src/App.jsx` still owns state transitions, derived view data, and screen orchestration; persistence and import/export normalization live in focused helper folders.
 
 ## Data and storage
 

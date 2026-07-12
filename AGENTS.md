@@ -12,9 +12,11 @@
 
 ## Project structure
 
-- `src/App.jsx`: class component that owns app state, persistence, import/export, derived view data, and screen orchestration.
+- `src/App.jsx`: class component that owns app state, handlers, derived view data, and screen orchestration.
 - `src/components/`: stateless presentational components for ledger, chart, settings, add/edit sheet, icons, and coin animation.
 - `src/data/`: static category definitions, translations, swatches, seed data.
+- `src/persistence/`: local storage load/save helpers.
+- `src/importExport/`: JSON/CSV import-export and category merge helpers.
 - `src/utils/`: pure helpers for dates, money formatting, CSV parsing/escaping, downloads, and coin styling.
 - `src/App.css`: global styles, responsive layout, animations.
 - `public/icons/`: PWA icons referenced by manifest/service worker.
