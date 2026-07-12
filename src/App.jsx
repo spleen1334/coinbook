@@ -72,6 +72,7 @@ export default class App extends React.Component {
       swipingRowId: null,
       swipeRowOffset: 0,
       sheetClosing: false,
+      canInstallApp: false,
       categories: CATEGORY_DEFINITIONS.map((c, i) => ({ id: c.id, name: c.name, color: defaultCatColor(i) })),
       expenses: buildSeedExpenses()
     };
@@ -79,6 +80,19 @@ export default class App extends React.Component {
   }
 
   componentDidMount() {
+    this._beforeInstallPromptHandler = (e) => {
+      e.preventDefault();
+      this._installPromptEvent = e;
+      if (!this.isStandalone()) this.setState({ canInstallApp: true });
+    };
+    this._appInstalledHandler = () => {
+      this._installPromptEvent = null;
+      this.setState({ canInstallApp: false });
+      this.showToast(this.getText().installedToast || 'Installed');
+    };
+    window.addEventListener('beforeinstallprompt', this._beforeInstallPromptHandler);
+    window.addEventListener('appinstalled', this._appInstalledHandler);
+    if (!this.isStandalone()) this.setState({ canInstallApp: true });
     this._splashFadeTimer = setTimeout(() => this.setState({ splashFadingOut: true }), 1400);
     this._splashTimer = setTimeout(() => this.setState({ showSplash: false }), 1800);
     this._lastTotal = this.computeFilteredTotal();
@@ -103,6 +117,10 @@ export default class App extends React.Component {
     if (this._totalRaf) cancelAnimationFrame(this._totalRaf);
     if (this._totalFallback) clearTimeout(this._totalFallback);
     if (this._sheetCloseTimer) clearTimeout(this._sheetCloseTimer);
+    if (this._beforeInstallPromptHandler) {
+      window.removeEventListener('beforeinstallprompt', this._beforeInstallPromptHandler);
+    }
+    if (this._appInstalledHandler) window.removeEventListener('appinstalled', this._appInstalledHandler);
   }
 
   componentDidUpdate() {
@@ -144,6 +162,14 @@ export default class App extends React.Component {
   }
 
   // ---------- data helpers ----------
+
+  isStandalone() {
+    return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+  }
+
+  getText() {
+    return UI_TEXT[this.state.language] || UI_TEXT.en;
+  }
 
   getRange() {
     const y = TODAY.getFullYear(),
@@ -388,6 +414,22 @@ export default class App extends React.Component {
     this.setState((s) => ({ rates: { ...s.rates, [code]: isNaN(v) ? 0 : v } }));
   };
   setNumberFormat = (patch) => this.setState((s) => ({ numberFormat: { ...s.numberFormat, ...patch } }));
+
+  installApp = async () => {
+    const t = this.getText();
+    const promptEvent = this._installPromptEvent;
+    if (!promptEvent) {
+      this.showToast(t.installFallback || 'Use browser menu to add to home screen');
+      return;
+    }
+
+    promptEvent.prompt();
+    const choice = promptEvent.userChoice ? await promptEvent.userChoice : null;
+    if (!choice || choice.outcome === 'accepted') {
+      this._installPromptEvent = null;
+      this.setState({ canInstallApp: false });
+    }
+  };
 
   requestExpenseTotalReplay() {
     this._replayExpenseAnimation = true;

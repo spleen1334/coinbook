@@ -130,6 +130,11 @@ export function SettingsScreen({ app, s, v, t }) {
 
       <div className="cb-section-label">{t.data}</div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 22 }}>
+        {s.canInstallApp && (
+          <div className="cb-btn-solid hover-lift press-96" onClick={app.installApp}>
+            {t.installApp}
+          </div>
+        )}
         <div className="cb-btn-outline hover-lift" onClick={app.exportJson}>
           {t.exportJson}
         </div>
