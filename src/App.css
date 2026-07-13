@@ -385,6 +385,9 @@ a:hover {
   box-shadow: 0 6px 10px -6px rgba(44, 36, 22, 0.35);
   z-index: 3;
 }
+.cb-header-graph {
+  padding-bottom: 6px;
+}
 .cb-gear {
   position: absolute;
   top: 18px;
@@ -449,6 +452,9 @@ a:hover {
   gap: 6px;
   margin: 16px 0 12px;
 }
+.cb-period-row-graph {
+  margin-bottom: 8px;
+}
 .cb-period-tab {
   flex: 1;
   display: flex;
@@ -490,14 +496,37 @@ a:hover {
   color: #a8916c;
   text-align: center;
 }
+.cb-total-currency {
+  display: flex;
+  justify-content: center;
+  margin-top: 5px;
+}
 .cb-total-value {
-  font-family: 'Special Elite', monospace;
-  font-size: 38px;
-  color: #b5432e;
-  text-align: center;
-  transform: rotate(-1deg);
-  text-shadow: 1.5px 1.5px 0 rgba(181, 67, 46, 0.22);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 8px;
   margin-top: 2px;
+  max-width: 100%;
+  min-width: 0;
+  transform: rotate(-1deg);
+}
+.cb-total-amount {
+  flex: 1 1 auto;
+  min-width: 0;
+  text-align: right;
+  font-family: 'Special Elite', monospace;
+  font-size: clamp(29px, 8.2vw, 36px);
+  color: #b5432e;
+  text-shadow: 1.5px 1.5px 0 rgba(181, 67, 46, 0.22);
+  line-height: 0.92;
+  letter-spacing: -0.5px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.cb-total-value .cb-currency-badge {
+  flex: none;
+  transform: translateY(-1px);
 }
 .cb-period-nav {
   display: flex;
@@ -505,6 +534,12 @@ a:hover {
   justify-content: center;
   gap: 8px;
   margin-top: 9px;
+}
+.cb-period-nav-compact {
+  margin-top: 2px;
+}
+.cb-chart-period-wrap {
+  margin: -2px 0 8px;
 }
 .cb-flourish {
   flex: 1;
@@ -682,6 +717,10 @@ a:hover {
   background: #f4ecd8;
   background-image: repeating-linear-gradient(#f4ecd8 0px, #f4ecd8 33px, #ede2c6 34px);
 }
+.cb-content-graph {
+  overflow: hidden;
+  padding-bottom: 14px;
+}
 .cb-empty {
   text-align: center;
   color: #a8987a;
@@ -814,9 +853,73 @@ a:hover {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 2px;
-  padding: 0 20px;
+  gap: 3px;
+  padding: 0 16px;
   pointer-events: none;
+}
+.cb-donut-label {
+  font-size: 9px;
+  letter-spacing: 1.5px;
+  color: #8a7355;
+  text-align: center;
+}
+.cb-donut-value {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  max-width: 136px;
+  min-width: 0;
+  font-family: 'Special Elite', monospace;
+  font-size: clamp(12px, 4.3vw, 18px);
+  color: #2c2416;
+  line-height: 0.96;
+  letter-spacing: -0.3px;
+  font-variant-numeric: tabular-nums;
+  padding: 1px 7px 2px;
+  border-radius: 10px;
+  background: rgba(244, 236, 216, 0.82);
+  box-shadow:
+    inset 0 0 0 1px rgba(138, 115, 85, 0.18),
+    0 1px 3px rgba(44, 36, 22, 0.12);
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.72);
+}
+.cb-donut-amount {
+  flex: 1 1 auto;
+  min-width: 0;
+  text-align: right;
+  white-space: nowrap;
+}
+.cb-donut-value .cb-currency-badge {
+  flex: none;
+  transform: translateY(-1px);
+}
+.cb-chart-screen {
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+.cb-chart-hero {
+  flex: none;
+  position: relative;
+  display: flex;
+  justify-content: center;
+  padding: 12px 0 8px;
+}
+.cb-chart-donut-wrap {
+  position: relative;
+  width: 188px;
+  height: 188px;
+}
+.cb-chart-list {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding-bottom: 2px;
+}
+.cb-chart-empty {
+  padding-top: 10px;
 }
 .cb-legend-row {
   display: flex;
@@ -1123,6 +1226,12 @@ a:hover {
   box-shadow: 0 2px 0 rgba(44, 36, 22, 0.18);
   transition: transform 0.15s ease;
 }
+.cb-choice-currency {
+  min-height: 58px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
 .cb-panel {
   border: 1.5px solid #2c2416;
   border-radius: 8px;
@@ -1219,6 +1328,91 @@ a:hover {
   border-radius: 8px;
   cursor: pointer;
   transition: transform 0.15s ease;
+}
+
+/* ---- currency badges ---- */
+.cb-currency-badge {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  border-radius: 50%;
+  padding: 2px;
+  background: repeating-conic-gradient(rgba(44, 36, 22, 0.36) 0deg 6deg, rgba(255, 255, 255, 0.16) 6deg 12deg);
+  box-shadow:
+    0 2px 5px rgba(44, 36, 22, 0.26),
+    inset 0 1px 1px rgba(255, 255, 255, 0.18);
+}
+.cb-currency-badge-sm {
+  width: 28px;
+  height: 28px;
+}
+.cb-currency-badge-md {
+  width: 32px;
+  height: 32px;
+}
+.cb-currency-badge-lg {
+  width: 38px;
+  height: 38px;
+}
+.cb-currency-badge-face {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  box-shadow:
+    inset 0 1px 1px rgba(255, 255, 255, 0.52),
+    inset 0 -2px 3px rgba(0, 0, 0, 0.28);
+}
+.cb-currency-badge-face::before {
+  content: '';
+  position: absolute;
+  inset: 2px 4px auto 4px;
+  height: 35%;
+  border-radius: 999px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0));
+  pointer-events: none;
+}
+.cb-currency-badge-rim {
+  position: absolute;
+  inset: 3px;
+  border-radius: 50%;
+  border: 1px solid rgba(244, 236, 216, 0.42);
+  pointer-events: none;
+}
+.cb-currency-badge-letter {
+  position: relative;
+  font-family: 'Special Elite', monospace;
+  font-size: 11px;
+  line-height: 1;
+  color: #f4ecd8;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.32);
+  white-space: nowrap;
+  letter-spacing: 0.2px;
+}
+.cb-currency-badge-letter-rsd {
+  font-size: 8px;
+  letter-spacing: 0.8px;
+}
+.cb-currency-badge-usd .cb-currency-badge-face {
+  background:
+    radial-gradient(circle at 30% 24%, rgba(255, 255, 255, 0.42), rgba(255, 255, 255, 0) 42%),
+    radial-gradient(circle at 74% 82%, rgba(0, 0, 0, 0.28), rgba(0, 0, 0, 0) 56%), #2d5f49;
+}
+.cb-currency-badge-eur .cb-currency-badge-face {
+  background:
+    radial-gradient(circle at 30% 24%, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0) 42%),
+    radial-gradient(circle at 74% 82%, rgba(0, 0, 0, 0.28), rgba(0, 0, 0, 0) 56%), #4666a8;
+}
+.cb-currency-badge-rsd .cb-currency-badge-face {
+  background:
+    radial-gradient(circle at 30% 24%, rgba(255, 255, 255, 0.46), rgba(255, 255, 255, 0) 42%),
+    radial-gradient(circle at 74% 82%, rgba(0, 0, 0, 0.28), rgba(0, 0, 0, 0) 56%), #b65a2d;
 }
 
 /* ---- add / edit sheet ---- */

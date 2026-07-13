@@ -2,6 +2,7 @@ export const STORAGE_KEY = 'coinbook_v1_state';
 const DB_NAME = STORAGE_KEY;
 const DB_VERSION = 1;
 const STORE_NAME = 'snapshots';
+const DEFAULT_RATES = { RSD: 1, EUR: 0.0078, USD: 0.0092 };
 
 function getLocalStorage() {
   try {
@@ -19,11 +20,38 @@ function normalizePersistedState(saved) {
   if (Array.isArray(saved.categories)) out.categories = saved.categories;
   if (saved.language) out.language = saved.language;
   if (saved.currency) out.currency = saved.currency;
-  if (saved.rates) out.rates = saved.rates;
+  if (saved.rates) out.rates = normalizeRates(saved.rates);
   if (saved.numberFormat) out.numberFormat = saved.numberFormat;
   if (saved.listGrouping) out.listGrouping = saved.listGrouping;
   if (saved.period) out.period = saved.period;
   return out;
+}
+
+function toPositiveNumber(value) {
+  const number = Number(value);
+  return Number.isFinite(number) && number > 0 ? number : null;
+}
+
+function normalizeRates(rates) {
+  if (!rates || typeof rates !== 'object') return DEFAULT_RATES;
+
+  const oldRsdPerUsd = toPositiveNumber(rates.RSD);
+  const oldUsdPerUsd = toPositiveNumber(rates.USD);
+  const oldEurPerUsd = toPositiveNumber(rates.EUR);
+
+  if (oldRsdPerUsd && oldRsdPerUsd > 10 && oldUsdPerUsd && Math.abs(oldUsdPerUsd - 1) < 0.05) {
+    return {
+      RSD: 1,
+      EUR: oldEurPerUsd ? oldEurPerUsd / oldRsdPerUsd : DEFAULT_RATES.EUR,
+      USD: 1 / oldRsdPerUsd
+    };
+  }
+
+  return {
+    RSD: 1,
+    EUR: toPositiveNumber(rates.EUR) || DEFAULT_RATES.EUR,
+    USD: toPositiveNumber(rates.USD) || DEFAULT_RATES.USD
+  };
 }
 
 function loadLocalStorageState() {

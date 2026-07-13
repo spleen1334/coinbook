@@ -15,7 +15,7 @@ export function formatMoney(n, currency, fmt) {
     case 'EUR':
       return numStr + ' €';
     case 'RSD':
-      return numStr + ' дин.';
+      return 'RSD ' + numStr;
     case 'USD':
     default:
       return '$' + numStr;

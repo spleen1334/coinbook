@@ -1,3 +1,5 @@
+import { CurrencyBadge } from './CurrencyBadge.jsx';
+
 export function SettingsScreen({ app, s, v, t }) {
   return (
     <div className="cb-settings-anim">
@@ -22,11 +24,11 @@ export function SettingsScreen({ app, s, v, t }) {
         {v.currencyOptions.map((co) => (
           <div
             key={co.id}
-            className="cb-choice hover-lift"
+            className="cb-choice cb-choice-currency hover-lift"
             onClick={co.select}
             style={{ background: co.bg, color: co.fg }}
           >
-            {co.label}
+            <CurrencyBadge currency={co.id} size="lg" />
           </div>
         ))}
       </div>
@@ -105,7 +107,18 @@ export function SettingsScreen({ app, s, v, t }) {
       <div className="cb-section-label">{t.conversionRate}</div>
       <div className="cb-panel" style={{ marginBottom: 22 }}>
         <div className="cb-rate-row">
-          <div className="cb-rate-label">{t.perUsd} EUR</div>
+          <div className="cb-rate-label">{t.perRsd} USD</div>
+          <input
+            type="number"
+            step="0.0001"
+            min="0"
+            value={s.rates.USD}
+            onChange={(e) => app.setRate('USD', e)}
+            className="cb-input"
+          />
+        </div>
+        <div className="cb-rate-row">
+          <div className="cb-rate-label">{t.perRsd} EUR</div>
           <input
             type="number"
             step="0.0001"
@@ -115,26 +128,21 @@ export function SettingsScreen({ app, s, v, t }) {
             className="cb-input"
           />
         </div>
-        <div className="cb-rate-row">
-          <div className="cb-rate-label">{t.perUsd} RSD</div>
-          <input
-            type="number"
-            step="0.01"
-            min="0"
-            value={s.rates.RSD}
-            onChange={(e) => app.setRate('RSD', e)}
-            className="cb-input"
-          />
-        </div>
       </div>
+
+      {s.canInstallApp && (
+        <>
+          <div className="cb-section-label">{t.app}</div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 22 }}>
+            <div className="cb-btn-solid hover-lift press-96" onClick={app.installApp}>
+              {t.installApp}
+            </div>
+          </div>
+        </>
+      )}
 
       <div className="cb-section-label">{t.data}</div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 22 }}>
-        {s.canInstallApp && (
-          <div className="cb-btn-solid hover-lift press-96" onClick={app.installApp}>
-            {t.installApp}
-          </div>
-        )}
         <div className="cb-btn-outline hover-lift" onClick={app.exportJson}>
           {t.exportJson}
         </div>

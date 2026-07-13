@@ -7,6 +7,7 @@ import { CoinScatter } from './components/CoinScatter.jsx';
 import { LedgerScreen } from './components/LedgerScreen.jsx';
 import { ChartScreen } from './components/ChartScreen.jsx';
 import { SettingsScreen } from './components/SettingsScreen.jsx';
+import { CurrencyBadge } from './components/CurrencyBadge.jsx';
 import { AddSheet } from './components/AddSheet.jsx';
 import { pad, isoOf, formatShortDate } from './utils/date.js';
 import { formatNumber, formatMoney } from './utils/money.js';
@@ -39,8 +40,8 @@ export default class App extends React.Component {
       periodOffset: 0,
       screen: 'home',
       language: 'en',
-      currency: 'USD',
-      rates: { USD: 1, EUR: 0.92, RSD: 108.5 },
+      currency: 'RSD',
+      rates: { RSD: 1, EUR: 0.0078, USD: 0.0092 },
       numberFormat: { thousands: true, thousandsChar: ',', decimals: 2, decimalChar: '.' },
       listGrouping: 'date',
       hoverCatId: null,
@@ -287,9 +288,12 @@ export default class App extends React.Component {
     return names[cat.id] || cat.name;
   }
 
-  convertAndFormat(amount, cur) {
+  convertAndFormat(amount, cur, includeCurrency = true) {
     const rate = (this.state.rates && this.state.rates[cur]) || 1;
-    return formatMoney(amount * rate, cur, this.state.numberFormat);
+    const value = amount * rate;
+    return includeCurrency
+      ? formatMoney(value, cur, this.state.numberFormat)
+      : formatNumber(value, this.state.numberFormat);
   }
 
   // ---------- total counter animation ----------
@@ -777,7 +781,10 @@ export default class App extends React.Component {
     });
     const hoverCat = hoverCatId ? catArr.find((c) => c.id === hoverCatId) : null;
     const donutCenterLabel = hoverCat ? this.catLabel(hoverCat.cat) : t.totalSpent;
-    const donutCenterValue = hoverCat ? this.convertAndFormat(hoverCat.amt, cur) : this.convertAndFormat(total, cur);
+    const donutCenterValue = hoverCat
+      ? this.convertAndFormat(hoverCat.amt, cur, false)
+      : this.convertAndFormat(total, cur, false);
+    const donutCenterCurrency = cur;
 
     const periodDefs = [
       ['day', t.periodDay],
@@ -831,9 +838,9 @@ export default class App extends React.Component {
     ].map((o) => ({ ...o, bg: lang === o.id ? ink : 'transparent', fg: lang === o.id ? paperFg : ink }));
 
     const currencyOptions = [
-      { id: 'USD', label: '$ USD', select: () => this.setCurrency('USD') },
+      { id: 'RSD', label: 'RSD', select: () => this.setCurrency('RSD') },
       { id: 'EUR', label: '\u20ac EUR', select: () => this.setCurrency('EUR') },
-      { id: 'RSD', label: 'RSD', select: () => this.setCurrency('RSD') }
+      { id: 'USD', label: '$ USD', select: () => this.setCurrency('USD') }
     ].map((o) => ({ ...o, bg: cur === o.id ? ink : 'transparent', fg: cur === o.id ? paperFg : ink }));
 
     const groupingOptions = [
@@ -911,6 +918,7 @@ export default class App extends React.Component {
       groupingOptions,
       donutCenterLabel,
       donutCenterValue,
+      donutCenterCurrency,
       categoriesForPicker,
       selectedCatObj,
       selectedCatLabel,
@@ -965,6 +973,22 @@ export default class App extends React.Component {
     const isHome = s.screen === 'home';
     const isGraph = s.screen === 'graph';
     const notSearching = !v.isSearching;
+    const showChartNav = notSettings && isGraph;
+    const showTicket = notSettings && !isGraph;
+    const periodRowClass = isGraph ? 'cb-period-row cb-period-row-graph' : 'cb-period-row';
+    const periodNav = (
+      <div className={isGraph ? 'cb-period-nav cb-period-nav-compact' : 'cb-period-nav'}>
+        <div className="cb-flourish" />
+        <div className="cb-chevron hover-chevron" onClick={() => this.shiftPeriod(-1)}>
+          ‹
+        </div>
+        <div className="cb-period-pill">{this.getPeriodLabel()}</div>
+        <div className="cb-chevron hover-chevron" onClick={() => this.shiftPeriod(1)}>
+          ›
+        </div>
+        <div className="cb-flourish" />
+      </div>
+    );
 
     return (
       <div className="cb-outer">
@@ -982,7 +1006,7 @@ export default class App extends React.Component {
 
           <div className="cb-app">
             {/* ===== FIXED HEADER ===== */}
-            <div className="cb-header">
+            <div className={`cb-header ${isGraph ? 'cb-header-graph' : ''}`}>
               <div className="cb-gear hover-gear" onClick={this.goSettings}>
                 ⚙
               </div>
@@ -1025,7 +1049,7 @@ export default class App extends React.Component {
 
                   {notSearching && (
                     <>
-                      <div className="cb-period-row">
+                      <div className={periodRowClass}>
                         {v.periods.map((p) => (
                           <div
                             key={p.id}
@@ -1045,30 +1069,29 @@ export default class App extends React.Component {
                         ))}
                       </div>
 
-                      <div
-                        className="cb-total-wrap"
-                        onTouchStart={this.handleSwipeStart}
-                        onTouchEnd={this.handleSwipeEnd}
-                        onMouseDown={this.handleSwipeStart}
-                        onMouseUp={this.handleSwipeEnd}
-                      >
-                        <div className="cb-ticket">
-                          <CoinScatter tick={s.coinBurstTick} />
-                          <div className="cb-total-label">{t.totalSpent}</div>
-                          <div className="cb-total-value">{this.convertAndFormat(s.displayedTotal, s.currency)}</div>
-                          <div className="cb-period-nav">
-                            <div className="cb-flourish" />
-                            <div className="cb-chevron hover-chevron" onClick={() => this.shiftPeriod(-1)}>
-                              ‹
+                      {showChartNav && <div className="cb-chart-period-wrap">{periodNav}</div>}
+
+                      {showTicket && (
+                        <div
+                          className="cb-total-wrap"
+                          onTouchStart={this.handleSwipeStart}
+                          onTouchEnd={this.handleSwipeEnd}
+                          onMouseDown={this.handleSwipeStart}
+                          onMouseUp={this.handleSwipeEnd}
+                        >
+                          <div className="cb-ticket">
+                            <CoinScatter tick={s.coinBurstTick} />
+                            <div className="cb-total-label">{t.totalSpent}</div>
+                            <div className="cb-total-value">
+                              <span className="cb-total-amount">
+                                {this.convertAndFormat(s.displayedTotal, s.currency, false)}
+                              </span>
+                              <CurrencyBadge currency={s.currency} size="md" />
                             </div>
-                            <div className="cb-period-pill">{this.getPeriodLabel()}</div>
-                            <div className="cb-chevron hover-chevron" onClick={() => this.shiftPeriod(1)}>
-                              ›
-                            </div>
-                            <div className="cb-flourish" />
+                            {periodNav}
                           </div>
                         </div>
-                      </div>
+                      )}
                     </>
                   )}
                 </>
@@ -1078,7 +1101,7 @@ export default class App extends React.Component {
             </div>
 
             {/* ===== SCROLLABLE CONTENT ===== */}
-            <div className="cb-content">
+            <div className={`cb-content ${isGraph ? 'cb-content-graph' : ''}`}>
               {isSettings && <SettingsScreen app={this} s={s} v={v} t={t} />}
               {isHome && <LedgerScreen key={s.swipeTick} anim={v.contentAnim} v={v} t={t} />}
               {isGraph && <ChartScreen key={s.swipeTick} anim={v.contentAnim} v={v} t={t} />}

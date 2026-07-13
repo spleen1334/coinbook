@@ -102,6 +102,8 @@ Add an importer for data exported from the Monify app. Sample inspected: `sample
 
 ## 3. Add reusable conversion script for Monefy CSV exports
 
+Status: Implemented reusable Node ESM conversion script with dry-run, account metadata, alias controls, summary output, and private generated output path.
+
 Create a `scripts/` directory with a rerunnable script that converts private Monefy CSV exports into Coinbook's import format.
 
 ### Implementation plan
