@@ -34,3 +34,7 @@ Thumbs.db
 
 # Agent workspace
 .slim/deepwork/
+
+# Private local sample/import-export data
+samples/private/
+sample/

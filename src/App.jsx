@@ -13,7 +13,7 @@ import { formatNumber, formatMoney } from './utils/money.js';
 import { downloadFile } from './utils/download.js';
 import { fuzzyMatch } from './utils/search.js';
 import { defaultCatColor, coinFace } from './utils/coin.js';
-import { loadPersistedState, savePersistedState } from './persistence/localState.js';
+import { loadPersistedState, savePersistedStateAsync } from './persistence/localState.js';
 import { buildJsonExport, parseJsonImport } from './importExport/json.js';
 import { buildCsvExport, parseCsvImport } from './importExport/csv.js';
 
@@ -73,13 +73,14 @@ export default class App extends React.Component {
       swipeRowOffset: 0,
       sheetClosing: false,
       canInstallApp: false,
+      persistenceReady: false,
       categories: CATEGORY_DEFINITIONS.map((c, i) => ({ id: c.id, name: c.name, color: defaultCatColor(i) })),
       expenses: buildSeedExpenses()
     };
-    Object.assign(this.state, loadPersistedState());
   }
 
   componentDidMount() {
+    this._mounted = true;
     this._beforeInstallPromptHandler = (e) => {
       e.preventDefault();
       this._installPromptEvent = e;
@@ -97,20 +98,11 @@ export default class App extends React.Component {
     this._splashTimer = setTimeout(() => this.setState({ showSplash: false }), 1800);
     this._lastTotal = this.computeFilteredTotal();
     this.animateTotal(this._lastTotal);
-    const s = this.state;
-    this._persistSnapshot = {
-      expenses: s.expenses,
-      categories: s.categories,
-      language: s.language,
-      currency: s.currency,
-      rates: s.rates,
-      numberFormat: s.numberFormat,
-      listGrouping: s.listGrouping,
-      period: s.period
-    };
+    this.hydratePersistedState();
   }
 
   componentWillUnmount() {
+    this._mounted = false;
     if (this._splashFadeTimer) clearTimeout(this._splashFadeTimer);
     if (this._splashTimer) clearTimeout(this._splashTimer);
     if (this._toastTimer) clearTimeout(this._toastTimer);
@@ -127,28 +119,20 @@ export default class App extends React.Component {
     const s = this.state;
     const prev = this._persistSnapshot;
     if (
-      !prev ||
-      prev.expenses !== s.expenses ||
-      prev.categories !== s.categories ||
-      prev.language !== s.language ||
-      prev.currency !== s.currency ||
-      prev.rates !== s.rates ||
-      prev.numberFormat !== s.numberFormat ||
-      prev.listGrouping !== s.listGrouping ||
-      prev.period !== s.period
+      s.persistenceReady &&
+      (!prev ||
+        prev.expenses !== s.expenses ||
+        prev.categories !== s.categories ||
+        prev.language !== s.language ||
+        prev.currency !== s.currency ||
+        prev.rates !== s.rates ||
+        prev.numberFormat !== s.numberFormat ||
+        prev.listGrouping !== s.listGrouping ||
+        prev.period !== s.period)
     ) {
-      savePersistedState(s);
+      savePersistedStateAsync(s);
     }
-    this._persistSnapshot = {
-      expenses: s.expenses,
-      categories: s.categories,
-      language: s.language,
-      currency: s.currency,
-      rates: s.rates,
-      numberFormat: s.numberFormat,
-      listGrouping: s.listGrouping,
-      period: s.period
-    };
+    this._persistSnapshot = this.getPersistSnapshot(s);
 
     const newTotal = this.computeFilteredTotal();
     const shouldReplayExpenseAnimation = this._replayExpenseAnimation;
@@ -162,6 +146,27 @@ export default class App extends React.Component {
   }
 
   // ---------- data helpers ----------
+
+  getPersistSnapshot(s) {
+    return {
+      expenses: s.expenses,
+      categories: s.categories,
+      language: s.language,
+      currency: s.currency,
+      rates: s.rates,
+      numberFormat: s.numberFormat,
+      listGrouping: s.listGrouping,
+      period: s.period
+    };
+  }
+
+  async hydratePersistedState() {
+    const persistedState = await loadPersistedState();
+    if (!this._mounted) return;
+    const hydratedState = { ...this.state, ...persistedState, persistenceReady: true };
+    this._persistSnapshot = this.getPersistSnapshot(hydratedState);
+    this.setState({ ...persistedState, persistenceReady: true });
+  }
 
   isStandalone() {
     return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
@@ -935,6 +940,24 @@ export default class App extends React.Component {
 
   render() {
     const s = this.state;
+
+    if (!s.persistenceReady) {
+      return (
+        <div className="cb-outer">
+          <div className="cb-phone">
+            <div className="cb-splash" style={{ opacity: 1 }}>
+              <div className="cb-splash-badge">
+                <div className="cb-splash-ring" />
+                <img src={APP_ICON_URL} width="88" height="88" className="cb-splash-icon" alt="" />
+              </div>
+              <div className="cb-splash-title">COIN BOOK</div>
+              <div className="cb-splash-sub">— EXPENSE LEDGER —</div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
     const v = this.getViewData();
     const t = v.t;
     const isSettings = s.screen === 'settings';
