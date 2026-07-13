@@ -109,22 +109,26 @@ export function SettingsScreen({ app, s, v, t }) {
         <div className="cb-rate-row">
           <div className="cb-rate-label">{t.perRsd} USD</div>
           <input
-            type="number"
+            type="text"
+            inputMode="decimal"
             step="0.0001"
             min="0"
-            value={s.rates.USD}
+            value={s.rates.USD ?? ''}
             onChange={(e) => app.setRate('USD', e)}
+            onBlur={() => app.finishRateEditing('USD')}
             className="cb-input"
           />
         </div>
         <div className="cb-rate-row">
           <div className="cb-rate-label">{t.perRsd} EUR</div>
           <input
-            type="number"
+            type="text"
+            inputMode="decimal"
             step="0.0001"
             min="0"
-            value={s.rates.EUR}
+            value={s.rates.EUR ?? ''}
             onChange={(e) => app.setRate('EUR', e)}
+            onBlur={() => app.finishRateEditing('EUR')}
             className="cb-input"
           />
         </div>

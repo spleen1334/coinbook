@@ -14,7 +14,7 @@ import { formatNumber, formatMoney } from './utils/money.js';
 import { downloadFile } from './utils/download.js';
 import { fuzzyMatch } from './utils/search.js';
 import { defaultCatColor, coinFace } from './utils/coin.js';
-import { loadPersistedState, savePersistedStateAsync } from './persistence/localState.js';
+import { DEFAULT_RATES, loadPersistedState, savePersistedStateAsync } from './persistence/localState.js';
 import { buildJsonExport, parseJsonImport } from './importExport/json.js';
 import { buildCsvExport, parseCsvImport } from './importExport/csv.js';
 
@@ -41,7 +41,7 @@ export default class App extends React.Component {
       screen: 'home',
       language: 'en',
       currency: 'RSD',
-      rates: { RSD: 1, EUR: 0.0078, USD: 0.0092 },
+      rates: DEFAULT_RATES,
       numberFormat: { thousands: true, thousandsChar: ',', decimals: 2, decimalChar: '.' },
       listGrouping: 'date',
       hoverCatId: null,
@@ -289,7 +289,10 @@ export default class App extends React.Component {
   }
 
   convertAndFormat(amount, cur, includeCurrency = true) {
-    const rate = (this.state.rates && this.state.rates[cur]) || 1;
+    const storedRate = this.state.rates && this.state.rates[cur];
+    const parsedRate = Number(String(storedRate).replace(',', '.'));
+    const fallbackRate = DEFAULT_RATES[cur] || 1;
+    const rate = Number.isFinite(parsedRate) && parsedRate > 0 ? parsedRate : fallbackRate;
     const value = amount * rate;
     return includeCurrency
       ? formatMoney(value, cur, this.state.numberFormat)
@@ -419,8 +422,20 @@ export default class App extends React.Component {
   setLanguage = (lang) => this.setState({ language: lang });
   setCurrency = (cur) => this.setState({ currency: cur });
   setRate = (code, e) => {
-    const v = parseFloat(e.target.value);
-    this.setState((s) => ({ rates: { ...s.rates, [code]: isNaN(v) ? 0 : v } }));
+    const value = e.target.value;
+    if (!/^\d*(?:[.,]\d*)?$/.test(value)) return;
+    this.setState((s) => ({ rates: { ...s.rates, [code]: value } }));
+  };
+  finishRateEditing = (code) => {
+    this.setState((s) => {
+      const parsedRate = Number(String(s.rates?.[code]).replace(',', '.'));
+      return {
+        rates: {
+          ...s.rates,
+          [code]: Number.isFinite(parsedRate) && parsedRate > 0 ? parsedRate : DEFAULT_RATES[code]
+        }
+      };
+    });
   };
   setNumberFormat = (patch) => this.setState((s) => ({ numberFormat: { ...s.numberFormat, ...patch } }));
 

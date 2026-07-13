@@ -2,7 +2,7 @@ export const STORAGE_KEY = 'coinbook_v1_state';
 const DB_NAME = STORAGE_KEY;
 const DB_VERSION = 1;
 const STORE_NAME = 'snapshots';
-const DEFAULT_RATES = { RSD: 1, EUR: 0.0078, USD: 0.0092 };
+export const DEFAULT_RATES = { RSD: 1, EUR: 0.00852051, USD: 0.0097202 };
 
 function getLocalStorage() {
   try {
@@ -28,7 +28,7 @@ function normalizePersistedState(saved) {
 }
 
 function toPositiveNumber(value) {
-  const number = Number(value);
+  const number = Number(String(value).replace(',', '.'));
   return Number.isFinite(number) && number > 0 ? number : null;
 }
 
