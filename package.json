@@ -16,22 +16,27 @@
     "lint:fix": "eslint . --fix",
     "format": "prettier . --write",
     "format:check": "prettier . --check",
-    "check": "npm run format:check && npm run lint && npm run build"
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "verify:pwa": "node scripts/verify-pwa-build.mjs",
+    "check": "npm run format:check && npm run lint && npm run test && npm run verify:pwa"
   },
   "dependencies": {
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1"
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7"
   },
   "devDependencies": {
-    "@eslint/js": "^9.32.0",
+    "@eslint/js": "^9.39.5",
     "@vitejs/plugin-react": "^5.2.0",
-    "eslint": "^9.32.0",
-    "eslint-plugin-react-hooks": "^5.2.0",
-    "eslint-plugin-react-refresh": "^0.4.20",
+    "eslint": "^9.39.5",
+    "eslint-plugin-react": "^7.37.5",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "eslint-plugin-react-refresh": "^0.5.3",
     "gh-pages": "^6.3.0",
-    "globals": "^15.15.0",
+    "globals": "^17.7.0",
     "prettier": "^3.6.2",
     "vite": "^6.4.3",
-    "vite-plugin-pwa": "^1.3.0"
+    "vite-plugin-pwa": "^1.3.0",
+    "vitest": "^4.1.10"
   }
 }

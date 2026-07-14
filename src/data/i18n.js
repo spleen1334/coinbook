@@ -49,7 +49,8 @@ export const CATEGORY_NAMES_BY_LANGUAGE = {
     toiletry: 'Toiletry',
     transport: 'Transport',
     travel: 'Travel',
-    tea: 'Tea'
+    tea: 'Tea',
+    other: 'Other'
   },
   sr: {
     bills: 'Рачуни',
@@ -93,7 +94,8 @@ export const CATEGORY_NAMES_BY_LANGUAGE = {
     toiletry: 'Хигијена',
     transport: 'Превоз',
     travel: 'Путовања',
-    tea: 'Чај'
+    tea: 'Чај',
+    other: 'Остало'
   },
   ru: {
     bills: 'Счета',
@@ -137,7 +139,8 @@ export const CATEGORY_NAMES_BY_LANGUAGE = {
     toiletry: 'Гигиена',
     transport: 'Транспорт',
     travel: 'Путешествия',
-    tea: 'Чай'
+    tea: 'Чай',
+    other: 'Другое'
   }
 };
 
@@ -188,6 +191,7 @@ export const UI_TEXT = {
     eraseEverything: 'ERASE EVERYTHING',
     addedToast: 'added',
     savedToast: 'Entry saved',
+    categoryExistsToast: 'Category already exists — selected it instead',
     periodDay: 'DAY',
     periodWeek: 'WEEK',
     periodMonth: 'MONTH',
@@ -247,6 +251,7 @@ export const UI_TEXT = {
     eraseEverything: 'ОБРИШИ СВЕ',
     addedToast: 'додато',
     savedToast: 'Унос сачуван',
+    categoryExistsToast: 'Категорија већ постоји — изабрана је уместо тога',
     periodDay: 'ДАН',
     periodWeek: 'НЕДЕЉА',
     periodMonth: 'МЕСЕЦ',
@@ -306,6 +311,7 @@ export const UI_TEXT = {
     eraseEverything: 'УДАЛИТЬ ВСЁ',
     addedToast: 'добавлено',
     savedToast: 'Запись сохранена',
+    categoryExistsToast: 'Категория уже существует — выбрана она',
     periodDay: 'ДЕНЬ',
     periodWeek: 'НЕДЕЛЯ',
     periodMonth: 'МЕСЯЦ',

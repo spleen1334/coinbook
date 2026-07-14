@@ -1,13 +1,35 @@
 import { CurrencyBadge } from './CurrencyBadge.jsx';
 
-export function SettingsScreen({ app, s, v, t }) {
+export function SettingsScreen({
+  t,
+  languageOptions,
+  currencyOptions,
+  numberFormat,
+  thousandsToggle,
+  thousandsCharOptions,
+  decimalsOptions,
+  decimalCharOptions,
+  numberFormatPreview,
+  usdRate,
+  eurRate,
+  onRateChange,
+  onRateBlur,
+  canInstallApp,
+  onInstallApp,
+  onExportJson,
+  onExportCsv,
+  onImportJsonFile,
+  onImportCsvFile,
+  onDone,
+  onOpenDeleteAll
+}) {
   return (
     <div className="cb-settings-anim">
       <div className="cb-settings-title">{t.settingsTitle}</div>
 
       <div className="cb-section-label">{t.language}</div>
       <div className="cb-choice-row" style={{ marginBottom: 18 }}>
-        {v.languageOptions.map((lo) => (
+        {languageOptions.map((lo) => (
           <div
             key={lo.id}
             className="cb-choice hover-lift"
@@ -21,7 +43,7 @@ export function SettingsScreen({ app, s, v, t }) {
 
       <div className="cb-section-label">{t.currency}</div>
       <div className="cb-choice-row" style={{ marginBottom: 22 }}>
-        {v.currencyOptions.map((co) => (
+        {currencyOptions.map((co) => (
           <div
             key={co.id}
             className="cb-choice cb-choice-currency hover-lift"
@@ -38,7 +60,7 @@ export function SettingsScreen({ app, s, v, t }) {
         <div className="cb-panel-row">
           <div className="cb-panel-label">{t.thousandsSep}</div>
           <div style={{ display: 'flex', gap: 5 }}>
-            {v.thousandsToggle.map((opt) => (
+            {thousandsToggle.map((opt) => (
               <div
                 key={String(opt.id)}
                 className="cb-toggle hover-lift press-96"
@@ -50,11 +72,11 @@ export function SettingsScreen({ app, s, v, t }) {
             ))}
           </div>
         </div>
-        {v.numberFormat.thousands && (
+        {numberFormat.thousands && (
           <div className="cb-panel-row">
             <div className="cb-panel-label">{t.thousandsChar}</div>
             <div style={{ display: 'flex', gap: 5 }}>
-              {v.thousandsCharOptions.map((opt) => (
+              {thousandsCharOptions.map((opt) => (
                 <div
                   key={opt.id}
                   className="cb-toggle hover-lift press-96"
@@ -70,7 +92,7 @@ export function SettingsScreen({ app, s, v, t }) {
         <div className="cb-panel-row">
           <div className="cb-panel-label">{t.decimalPlaces}</div>
           <div style={{ display: 'flex', gap: 5 }}>
-            {v.decimalsOptions.map((opt) => (
+            {decimalsOptions.map((opt) => (
               <div
                 key={opt.id}
                 className="cb-toggle hover-lift press-96"
@@ -82,11 +104,11 @@ export function SettingsScreen({ app, s, v, t }) {
             ))}
           </div>
         </div>
-        {v.numberFormat.decimals > 0 && (
+        {numberFormat.decimals > 0 && (
           <div className="cb-panel-row">
             <div className="cb-panel-label">{t.decimalChar}</div>
             <div style={{ display: 'flex', gap: 5 }}>
-              {v.decimalCharOptions.map((opt) => (
+              {decimalCharOptions.map((opt) => (
                 <div
                   key={opt.id}
                   className="cb-toggle hover-lift press-96"
@@ -100,7 +122,7 @@ export function SettingsScreen({ app, s, v, t }) {
           </div>
         )}
         <div style={{ fontSize: 11, color: '#8a7355', textAlign: 'right' }}>
-          {t.preview}: {v.numberFormatPreview}
+          {t.preview}: {numberFormatPreview}
         </div>
       </div>
 
@@ -113,9 +135,9 @@ export function SettingsScreen({ app, s, v, t }) {
             inputMode="decimal"
             step="0.0001"
             min="0"
-            value={s.rates.USD ?? ''}
-            onChange={(e) => app.setRate('USD', e)}
-            onBlur={() => app.finishRateEditing('USD')}
+            value={usdRate ?? ''}
+            onChange={(e) => onRateChange('USD', e)}
+            onBlur={() => onRateBlur('USD')}
             className="cb-input"
           />
         </div>
@@ -126,19 +148,19 @@ export function SettingsScreen({ app, s, v, t }) {
             inputMode="decimal"
             step="0.0001"
             min="0"
-            value={s.rates.EUR ?? ''}
-            onChange={(e) => app.setRate('EUR', e)}
-            onBlur={() => app.finishRateEditing('EUR')}
+            value={eurRate ?? ''}
+            onChange={(e) => onRateChange('EUR', e)}
+            onBlur={() => onRateBlur('EUR')}
             className="cb-input"
           />
         </div>
       </div>
 
-      {s.canInstallApp && (
+      {canInstallApp && (
         <>
           <div className="cb-section-label">{t.app}</div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 22 }}>
-            <div className="cb-btn-solid hover-lift press-96" onClick={app.installApp}>
+            <div className="cb-btn-solid hover-lift press-96" onClick={onInstallApp}>
               {t.installApp}
             </div>
           </div>
@@ -147,34 +169,29 @@ export function SettingsScreen({ app, s, v, t }) {
 
       <div className="cb-section-label">{t.data}</div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 22 }}>
-        <div className="cb-btn-outline hover-lift" onClick={app.exportJson}>
+        <div className="cb-btn-outline hover-lift" onClick={onExportJson}>
           {t.exportJson}
         </div>
-        <div className="cb-btn-outline hover-lift" onClick={app.exportCsv}>
+        <div className="cb-btn-outline hover-lift" onClick={onExportCsv}>
           {t.exportCsv}
         </div>
         <label className="cb-btn-outline cb-btn-dashed hover-lift">
           {t.importJson}
-          <input
-            type="file"
-            accept="application/json,.json"
-            onChange={app.onImportJsonFile}
-            style={{ display: 'none' }}
-          />
+          <input type="file" accept="application/json,.json" onChange={onImportJsonFile} style={{ display: 'none' }} />
         </label>
         <label className="cb-btn-outline cb-btn-dashed hover-lift">
           {t.importCsv}
-          <input type="file" accept="text/csv,.csv" onChange={app.onImportCsvFile} style={{ display: 'none' }} />
+          <input type="file" accept="text/csv,.csv" onChange={onImportCsvFile} style={{ display: 'none' }} />
         </label>
       </div>
 
-      <div className="cb-btn-solid hover-lift press-96" onClick={app.goHome} style={{ marginBottom: 12 }}>
+      <div className="cb-btn-solid hover-lift press-96" onClick={onDone} style={{ marginBottom: 12 }}>
         {t.done}
       </div>
 
       <div className="cb-danger-zone">
         <div className="cb-danger-label">{t.dangerZone}</div>
-        <div className="cb-btn-danger hover-danger" onClick={app.openDeleteAll}>
+        <div className="cb-btn-danger hover-danger" onClick={onOpenDeleteAll}>
           {t.deleteAll}
         </div>
       </div>

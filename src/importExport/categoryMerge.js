@@ -1,36 +1,48 @@
-export function mergeImportedCategories(currentCategories, importedCategories, swatches) {
+import { normalizeColor } from '../utils/validate.js';
+import { hashCatColor } from '../utils/coin.js';
+
+const MAX_NAME_LENGTH = 100;
+const SAFE_ID_RE = /^[a-zA-Z0-9_-]{1,64}$/;
+
+function safeSourceId(rawId) {
+  const id = typeof rawId === 'string' ? rawId.trim() : '';
+  return SAFE_ID_RE.test(id) ? id : '';
+}
+
+export function mergeImportedCategories(currentCategories, importedCategories) {
   const categories = [...currentCategories];
-  const catByName = {};
-  const catById = {};
+  const catByName = new Map();
+  const catById = new Map();
   const usedIds = new Set();
 
   categories.forEach((c) => {
-    catByName[c.name.toLowerCase()] = c.id;
-    catById[c.id] = c.id;
+    catByName.set(c.name.toLowerCase(), c.id);
+    catById.set(c.id, c.id);
     usedIds.add(c.id);
   });
 
   const importTick = Date.now();
-  importedCategories.forEach((c, i) => {
-    const name = (c.name || '').trim();
+  importedCategories.forEach((raw, i) => {
+    const c = raw && typeof raw === 'object' ? raw : {};
+    const name = (typeof c.name === 'string' ? c.name : '').trim().slice(0, MAX_NAME_LENGTH);
     if (!name) return;
 
-    const sourceId = c.id || '';
+    const sourceId = safeSourceId(c.id);
     const nameKey = name.toLowerCase();
-    if (catByName[nameKey]) {
-      if (sourceId) catById[sourceId] = catByName[nameKey];
+    if (catByName.has(nameKey)) {
+      if (sourceId) catById.set(sourceId, catByName.get(nameKey));
       return;
     }
 
     const id = sourceId && !usedIds.has(sourceId) ? sourceId : 'custom_' + importTick + '_' + i;
     usedIds.add(id);
-    catByName[nameKey] = id;
-    if (sourceId) catById[sourceId] = id;
-    catById[id] = id;
+    catByName.set(nameKey, id);
+    if (sourceId) catById.set(sourceId, id);
+    catById.set(id, id);
     categories.push({
       id,
       name,
-      color: c.color || swatches[(categories.length - currentCategories.length) % swatches.length]
+      color: normalizeColor(c.color, hashCatColor(name))
     });
   });
 

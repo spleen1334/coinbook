@@ -1,3 +1,6 @@
+import { normalizeAmount, isHexColor, normalizeIdString, normalizeNote, isValidDateString } from '../utils/validate.js';
+import { hashCatColor } from '../utils/coin.js';
+
 export const STORAGE_KEY = 'coinbook_v1_state';
 const DB_NAME = STORAGE_KEY;
 const DB_VERSION = 1;
@@ -13,17 +16,81 @@ function getLocalStorage() {
   }
 }
 
-function normalizePersistedState(saved) {
+const SORT_DIRS = ['asc', 'desc'];
+
+function normalizeSortDir(value, fallback) {
+  return SORT_DIRS.includes(value) ? value : fallback;
+}
+
+// A brief earlier version of this validator fell back to this exact hex value for every
+// category whose color failed (then hex-only) validation, and that fallback got persisted
+// back to storage as if it were real data. It's not one of CATEGORY_SWATCHES, so it can
+// never be a genuine manual pick — treat it as corrupt so it self-heals like any other
+// invalid color, instead of being trusted forever just because it happens to be hex.
+const POISONED_FALLBACK_COLOR = '#8a7355';
+
+function normalizeCategoryRecords(raw) {
+  if (!Array.isArray(raw)) return null;
+  const seenIds = new Set();
+  const result = [];
+  raw.forEach((c) => {
+    if (!c || typeof c !== 'object') return;
+    const id = normalizeIdString(c.id);
+    const name = typeof c.name === 'string' ? c.name.trim().slice(0, 100) : '';
+    if (!id || !name || seenIds.has(id)) return;
+    seenIds.add(id);
+    // Only a hex color (other than the poisoned fallback above) is treated as an
+    // intentional user pick, since the swatch picker only ever produces hex. Anything
+    // else — missing, invalid, hsl() from the old index-based or current name-hash
+    // auto-coloring, or the poisoned fallback — is (re)derived from the name, so
+    // previously auto-colored (or corrupted) categories self-heal on load.
+    const hex = isHexColor(c.color) ? c.color.trim() : null;
+    result.push({ id, name, color: hex && hex !== POISONED_FALLBACK_COLOR ? hex : hashCatColor(name) });
+  });
+  return result;
+}
+
+function normalizeExpenseRecords(raw, validCategoryIds) {
+  if (!Array.isArray(raw)) return null;
+  const seenIds = new Set();
+  const result = [];
+  raw.forEach((e) => {
+    if (!e || typeof e !== 'object') return;
+    const id = normalizeIdString(e.id);
+    if (!id || seenIds.has(id)) return;
+    if (!isValidDateString(e.date)) return;
+    const amount = normalizeAmount(e.amount, null);
+    if (amount === null) return;
+    seenIds.add(id);
+    result.push({
+      id,
+      amount,
+      date: e.date,
+      categoryId: validCategoryIds.has(e.categoryId) ? e.categoryId : 'other',
+      note: normalizeNote(e.note)
+    });
+  });
+  return result;
+}
+
+export function normalizePersistedState(saved) {
   if (!saved || typeof saved !== 'object') return {};
   const out = {};
-  if (Array.isArray(saved.expenses)) out.expenses = saved.expenses;
-  if (Array.isArray(saved.categories)) out.categories = saved.categories;
+  const categories = normalizeCategoryRecords(saved.categories);
+  if (categories) out.categories = categories;
+  if (Array.isArray(saved.expenses)) {
+    const validCategoryIds = new Set(['other', ...(categories || []).map((c) => c.id)]);
+    out.expenses = normalizeExpenseRecords(saved.expenses, validCategoryIds);
+  }
   if (saved.language) out.language = saved.language;
   if (saved.currency) out.currency = saved.currency;
   if (saved.rates) out.rates = normalizeRates(saved.rates);
   if (saved.numberFormat) out.numberFormat = saved.numberFormat;
   if (saved.listGrouping) out.listGrouping = saved.listGrouping;
   if (saved.period) out.period = saved.period;
+  if (saved.dateSortDir) out.dateSortDir = normalizeSortDir(saved.dateSortDir, 'desc');
+  if (saved.categorySortDir) out.categorySortDir = normalizeSortDir(saved.categorySortDir, 'desc');
+  if (saved.ungroupedSortDir) out.ungroupedSortDir = normalizeSortDir(saved.ungroupedSortDir, 'desc');
   return out;
 }
 
@@ -148,17 +215,22 @@ async function saveIndexedDbState(state) {
 }
 
 export async function loadPersistedState() {
+  let idbState = {};
   try {
-    const idbState = await loadIndexedDbState();
-    if (hasPersistedFields(idbState)) return idbState;
-
-    const localState = loadLocalStorageState();
-    if (hasPersistedFields(localState)) {
-      await saveIndexedDbState(localState);
-      return localState;
-    }
+    idbState = await loadIndexedDbState();
   } catch (err) {
-    return {};
+    /* IndexedDB unavailable or read failed; fall back to localStorage below. */
+  }
+  if (hasPersistedFields(idbState)) return idbState;
+
+  const localState = loadLocalStorageState();
+  if (hasPersistedFields(localState)) {
+    try {
+      await saveIndexedDbState(localState);
+    } catch (err) {
+      /* Best-effort migration to IndexedDB; keep the localStorage data either way. */
+    }
+    return localState;
   }
   return {};
 }
@@ -172,7 +244,10 @@ export function pickPersistedState(state) {
     rates: state.rates,
     numberFormat: state.numberFormat,
     listGrouping: state.listGrouping,
-    period: state.period
+    period: state.period,
+    dateSortDir: state.dateSortDir,
+    categorySortDir: state.categorySortDir,
+    ungroupedSortDir: state.ungroupedSortDir
   };
 }
 
