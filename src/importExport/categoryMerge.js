@@ -1,3 +1,13 @@
+import { normalizeColor } from '../utils/validate.js';
+
+const MAX_NAME_LENGTH = 100;
+const SAFE_ID_RE = /^[a-zA-Z0-9_-]{1,64}$/;
+
+function safeSourceId(rawId) {
+  const id = typeof rawId === 'string' ? rawId.trim() : '';
+  return SAFE_ID_RE.test(id) ? id : '';
+}
+
 export function mergeImportedCategories(currentCategories, importedCategories, swatches) {
   const categories = [...currentCategories];
   const catByName = new Map();
@@ -11,11 +21,12 @@ export function mergeImportedCategories(currentCategories, importedCategories, s
   });
 
   const importTick = Date.now();
-  importedCategories.forEach((c, i) => {
-    const name = (c.name || '').trim();
+  importedCategories.forEach((raw, i) => {
+    const c = raw && typeof raw === 'object' ? raw : {};
+    const name = (typeof c.name === 'string' ? c.name : '').trim().slice(0, MAX_NAME_LENGTH);
     if (!name) return;
 
-    const sourceId = c.id || '';
+    const sourceId = safeSourceId(c.id);
     const nameKey = name.toLowerCase();
     if (catByName.has(nameKey)) {
       if (sourceId) catById.set(sourceId, catByName.get(nameKey));
@@ -30,7 +41,7 @@ export function mergeImportedCategories(currentCategories, importedCategories, s
     categories.push({
       id,
       name,
-      color: c.color || swatches[(categories.length - currentCategories.length) % swatches.length]
+      color: normalizeColor(c.color, swatches[(categories.length - currentCategories.length) % swatches.length])
     });
   });
 

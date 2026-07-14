@@ -1,5 +1,6 @@
 import { csvEscape, parseCsv } from '../utils/csv.js';
 import { mergeImportedCategories } from './categoryMerge.js';
+import { normalizeAmount, normalizeDateString, normalizeNote } from '../utils/validate.js';
 
 export function buildCsvExport(categories, expenses) {
   const catById = new Map();
@@ -37,10 +38,10 @@ export function parseCsvImport(text, currentCategories, swatches, fallbackDate) 
   const importTick = Date.now();
   const expenses = rows.slice(1).map((r, i) => ({
     id: 'imp' + importTick + '_' + i,
-    amount: parseFloat(r[aIdx]) || 0,
-    date: r[dIdx] || fallbackDate,
+    amount: normalizeAmount(r[aIdx], 0),
+    date: normalizeDateString(r[dIdx], fallbackDate),
     categoryId: catByName.get((r[cIdx] || '').trim().toLowerCase()) || 'other',
-    note: r[nIdx] || ''
+    note: normalizeNote(r[nIdx])
   }));
   return { categories, expenses };
 }

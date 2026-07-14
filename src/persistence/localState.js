@@ -1,3 +1,5 @@
+import { normalizeAmount, normalizeColor, normalizeIdString, normalizeNote, isValidDateString } from '../utils/validate.js';
+
 export const STORAGE_KEY = 'coinbook_v1_state';
 const DB_NAME = STORAGE_KEY;
 const DB_VERSION = 1;
@@ -19,11 +21,53 @@ function normalizeSortDir(value, fallback) {
   return SORT_DIRS.includes(value) ? value : fallback;
 }
 
+function normalizeCategoryRecords(raw) {
+  if (!Array.isArray(raw)) return null;
+  const seenIds = new Set();
+  const result = [];
+  raw.forEach((c) => {
+    if (!c || typeof c !== 'object') return;
+    const id = normalizeIdString(c.id);
+    const name = typeof c.name === 'string' ? c.name.trim().slice(0, 100) : '';
+    if (!id || !name || seenIds.has(id)) return;
+    seenIds.add(id);
+    result.push({ id, name, color: normalizeColor(c.color, '#8a7355') });
+  });
+  return result;
+}
+
+function normalizeExpenseRecords(raw, validCategoryIds) {
+  if (!Array.isArray(raw)) return null;
+  const seenIds = new Set();
+  const result = [];
+  raw.forEach((e) => {
+    if (!e || typeof e !== 'object') return;
+    const id = normalizeIdString(e.id);
+    if (!id || seenIds.has(id)) return;
+    if (!isValidDateString(e.date)) return;
+    const amount = normalizeAmount(e.amount, null);
+    if (amount === null) return;
+    seenIds.add(id);
+    result.push({
+      id,
+      amount,
+      date: e.date,
+      categoryId: validCategoryIds.has(e.categoryId) ? e.categoryId : 'other',
+      note: normalizeNote(e.note)
+    });
+  });
+  return result;
+}
+
 function normalizePersistedState(saved) {
   if (!saved || typeof saved !== 'object') return {};
   const out = {};
-  if (Array.isArray(saved.expenses)) out.expenses = saved.expenses;
-  if (Array.isArray(saved.categories)) out.categories = saved.categories;
+  const categories = normalizeCategoryRecords(saved.categories);
+  if (categories) out.categories = categories;
+  if (Array.isArray(saved.expenses)) {
+    const validCategoryIds = new Set(['other', ...(categories || []).map((c) => c.id)]);
+    out.expenses = normalizeExpenseRecords(saved.expenses, validCategoryIds);
+  }
   if (saved.language) out.language = saved.language;
   if (saved.currency) out.currency = saved.currency;
   if (saved.rates) out.rates = normalizeRates(saved.rates);
