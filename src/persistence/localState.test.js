@@ -99,6 +99,23 @@ describe('normalizePersistedState', () => {
     expect(out.categories[0].color).toBe('#123456');
   });
 
+  it('self-heals the poisoned #8a7355 fallback left over from an earlier bug, even though it is valid hex', () => {
+    // A brief earlier version of the validator fell back to this exact hex value for every
+    // category, and that got persisted to storage as if it were real data. It's not one of
+    // CATEGORY_SWATCHES, so it can never be a genuine manual pick — must not be trusted just
+    // because it happens to be hex.
+    const out = normalizePersistedState({
+      categories: [
+        { id: 'bills', name: 'Bills', color: '#8a7355' },
+        { id: 'food', name: 'Food', color: '#8a7355' },
+        { id: 'gifts', name: 'Gifts', color: '#8a7355' }
+      ]
+    });
+    const colors = out.categories.map((c) => c.color);
+    expect(colors).toEqual([hashCatColor('Bills'), hashCatColor('Food'), hashCatColor('Gifts')]);
+    expect(new Set(colors).size).toBe(3);
+  });
+
   it('self-heals hsl() category colors to the current name-hash scheme on every load (regression: all categories collapsing to one color)', () => {
     // Any hsl() color — whether from the old index-based scheme or a previous
     // hash-based color for a category that has since been renamed — is

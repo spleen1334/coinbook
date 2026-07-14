@@ -22,6 +22,13 @@ function normalizeSortDir(value, fallback) {
   return SORT_DIRS.includes(value) ? value : fallback;
 }
 
+// A brief earlier version of this validator fell back to this exact hex value for every
+// category whose color failed (then hex-only) validation, and that fallback got persisted
+// back to storage as if it were real data. It's not one of CATEGORY_SWATCHES, so it can
+// never be a genuine manual pick — treat it as corrupt so it self-heals like any other
+// invalid color, instead of being trusted forever just because it happens to be hex.
+const POISONED_FALLBACK_COLOR = '#8a7355';
+
 function normalizeCategoryRecords(raw) {
   if (!Array.isArray(raw)) return null;
   const seenIds = new Set();
@@ -32,11 +39,13 @@ function normalizeCategoryRecords(raw) {
     const name = typeof c.name === 'string' ? c.name.trim().slice(0, 100) : '';
     if (!id || !name || seenIds.has(id)) return;
     seenIds.add(id);
-    // Only a hex color is treated as an intentional user pick (the swatch picker only
-    // ever produces hex). Anything else — missing, invalid, or an hsl() color from the
-    // old index-based or current name-hash auto-coloring — is (re)derived from the name,
-    // so previously auto-colored categories self-heal to the current scheme on load.
-    result.push({ id, name, color: isHexColor(c.color) ? c.color.trim() : hashCatColor(name) });
+    // Only a hex color (other than the poisoned fallback above) is treated as an
+    // intentional user pick, since the swatch picker only ever produces hex. Anything
+    // else — missing, invalid, hsl() from the old index-based or current name-hash
+    // auto-coloring, or the poisoned fallback — is (re)derived from the name, so
+    // previously auto-colored (or corrupted) categories self-heal on load.
+    const hex = isHexColor(c.color) ? c.color.trim() : null;
+    result.push({ id, name, color: hex && hex !== POISONED_FALLBACK_COLOR ? hex : hashCatColor(name) });
   });
   return result;
 }
