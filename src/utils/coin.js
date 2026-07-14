@@ -8,14 +8,27 @@ function hashString(str) {
   return hash >>> 0; // unsigned, so it's safe to use as a positive index below
 }
 
-// Derives a stable color from a category name: same name always produces the
-// same color, regardless of array order, import order, or which device it
-// was created on. The golden-angle multiplier (as in defaultCatColor) keeps
-// hues from adjacent hash values spread far apart on the color wheel, so
-// categories still read as visually distinct even when hashed independently.
+const SATURATION_STEPS = [42, 47, 52, 57]; // vivid enough to read as clearly different hues
+const LIGHTNESS_STEPS = [30, 34, 38, 42, 46]; // dark enough that white lettering stays readable
+
+// Two names that happen to hash to a similar hue would otherwise look like
+// the "same" color if saturation and lightness were fixed (this was the bug:
+// every category was 32% saturation / 34% lightness, so only hue varied, and
+// nearby hues at identical brightness read as near-identical). Salting the
+// hash input per channel (name, name+'|s', name+'|l') draws three
+// effectively independent values from the same hash function, so two names
+// with a close hue will still usually differ in vividness or brightness.
 export function hashCatColor(name) {
-  const hue = Math.round((hashString(String(name)) * 137.508) % 360);
-  return 'hsl(' + hue + ', 32%, 34%)';
+  const key = String(name);
+  // Plain modulo, not a golden-angle multiply: that trick evenly spaces
+  // *sequential* integers (0, 1, 2, 3, ...) around the circle, but applied to
+  // arbitrary hash values it clusters badly — verified empirically against
+  // the app's default category list, where it packed most names into a
+  // ~40-degree blue/purple arc. A well-mixed hash mod 360 spreads far better.
+  const hue = hashString(key) % 360;
+  const saturation = SATURATION_STEPS[hashString(key + '|s') % SATURATION_STEPS.length];
+  const lightness = LIGHTNESS_STEPS[hashString(key + '|l') % LIGHTNESS_STEPS.length];
+  return 'hsl(' + hue + ', ' + saturation + '%, ' + lightness + '%)';
 }
 
 // Layered radial-gradient overlay that gives any flat category color the
