@@ -4,7 +4,11 @@ export function AppFooter({ app, s, t }) {
 
   return (
     <div className="cb-footer">
-      <div className="cb-nav-btn hover-nav press-96" onClick={app.goHome} style={{ color: isHome ? '#b5432e' : '#8a7355' }}>
+      <div
+        className="cb-nav-btn hover-nav press-96"
+        onClick={app.goHome}
+        style={{ color: isHome ? '#b5432e' : '#8a7355' }}
+      >
         <div
           className="cb-nav-icon-wrap"
           style={{
@@ -23,7 +27,11 @@ export function AppFooter({ app, s, t }) {
       <div className="cb-fab hover-fab press-fab" onClick={app.openAdd}>
         +
       </div>
-      <div className="cb-nav-btn hover-nav press-96" onClick={app.goGraph} style={{ color: isGraph ? '#b5432e' : '#8a7355' }}>
+      <div
+        className="cb-nav-btn hover-nav press-96"
+        onClick={app.goGraph}
+        style={{ color: isGraph ? '#b5432e' : '#8a7355' }}
+      >
         <div
           className="cb-nav-icon-wrap"
           style={{

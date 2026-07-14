@@ -8,11 +8,19 @@ import { SettingsScreen } from './components/SettingsScreen.jsx';
 import { AddSheet } from './components/AddSheet.jsx';
 import { isoOf, formatShortDate } from './utils/date.js';
 import { getRange as getRange$, getPeriodLabel as getPeriodLabel$ } from './utils/period.js';
-import { convertAndFormat as convertAndFormat$, convertAndFormatParts as convertAndFormatParts$ } from './utils/format.js';
+import {
+  convertAndFormat as convertAndFormat$,
+  convertAndFormatParts as convertAndFormatParts$
+} from './utils/format.js';
 import { downloadFile } from './utils/download.js';
 import { fuzzyMatch } from './utils/search.js';
 import { defaultCatColor } from './utils/coin.js';
-import { DEFAULT_RATES, loadPersistedState, savePersistedStateAsync, pickPersistedState } from './persistence/localState.js';
+import {
+  DEFAULT_RATES,
+  loadPersistedState,
+  savePersistedStateAsync,
+  pickPersistedState
+} from './persistence/localState.js';
 import { createTotalAnimator } from './hooks/useAnimatedTotal.js';
 import { playChaChing } from './utils/chaChing.js';
 import { buildViewData } from './selectors/getViewData.js';
@@ -184,7 +192,15 @@ export default class App extends React.Component {
   }
 
   getPeriodLabel() {
-    return getPeriodLabel$(this.state.period, this.state.periodOffset, this.state.language, today(), UI_TEXT, MONTHS_BY_LANGUAGE, MONTHS);
+    return getPeriodLabel$(
+      this.state.period,
+      this.state.periodOffset,
+      this.state.language,
+      today(),
+      UI_TEXT,
+      MONTHS_BY_LANGUAGE,
+      MONTHS
+    );
   }
 
   getFilteredExpenses() {
@@ -563,7 +579,6 @@ export default class App extends React.Component {
   getViewData() {
     return buildViewData(this);
   }
-
 
   render() {
     const s = this.state;

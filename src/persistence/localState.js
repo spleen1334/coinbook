@@ -1,4 +1,10 @@
-import { normalizeAmount, normalizeColor, normalizeIdString, normalizeNote, isValidDateString } from '../utils/validate.js';
+import {
+  normalizeAmount,
+  normalizeColor,
+  normalizeIdString,
+  normalizeNote,
+  isValidDateString
+} from '../utils/validate.js';
 
 export const STORAGE_KEY = 'coinbook_v1_state';
 const DB_NAME = STORAGE_KEY;

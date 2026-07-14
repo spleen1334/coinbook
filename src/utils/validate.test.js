@@ -1,5 +1,12 @@
 import { describe, it, expect } from 'vitest';
-import { isValidDateString, normalizeDateString, normalizeAmount, normalizeNote, normalizeColor, normalizeIdString } from './validate.js';
+import {
+  isValidDateString,
+  normalizeDateString,
+  normalizeAmount,
+  normalizeNote,
+  normalizeColor,
+  normalizeIdString
+} from './validate.js';
 
 describe('isValidDateString', () => {
   it('accepts a well-formed calendar date', () => {

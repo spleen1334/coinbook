@@ -115,7 +115,9 @@ export function AppHeader({ app, s, v, t }) {
                     <CoinScatter tick={s.coinBurstTick} />
                     <div className="cb-total-label">{t.totalSpent}</div>
                     <div className="cb-total-value">
-                      <span className="cb-total-amount">{app.convertAndFormat(s.displayedTotal, s.currency, false)}</span>
+                      <span className="cb-total-amount">
+                        {app.convertAndFormat(s.displayedTotal, s.currency, false)}
+                      </span>
                       <CurrencyBadge currency={s.currency} size="md" />
                     </div>
                     <div className="cb-period-pill cb-period-pill-ticket">{app.getPeriodLabel()}</div>

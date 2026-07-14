@@ -15,9 +15,7 @@ describe('formatNumber', () => {
   });
 
   it('omits decimals when decimals is 0', () => {
-    expect(formatNumber(1234.5, { thousands: true, thousandsChar: ',', decimals: 0, decimalChar: '.' })).toBe(
-      '1,235'
-    );
+    expect(formatNumber(1234.5, { thousands: true, thousandsChar: ',', decimals: 0, decimalChar: '.' })).toBe('1,235');
   });
 
   it('formats negative numbers with a leading minus', () => {

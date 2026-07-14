@@ -63,7 +63,9 @@ describe('parseJsonImport', () => {
   });
 
   it('does not throw on a null entry or non-object entries in the expenses array', () => {
-    const text = JSON.stringify({ expenses: [null, 42, 'garbage', { amount: 1, date: '2026-07-01', categoryId: 'food' }] });
+    const text = JSON.stringify({
+      expenses: [null, 42, 'garbage', { amount: 1, date: '2026-07-01', categoryId: 'food' }]
+    });
     expect(() => parseJsonImport(text, categories, swatches, '2026-01-01')).not.toThrow();
     const { expenses } = parseJsonImport(text, categories, swatches, '2026-01-01');
     expect(expenses).toHaveLength(4);

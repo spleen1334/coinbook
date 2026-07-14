@@ -233,7 +233,14 @@ function buildSettingsOptions(app, t) {
     (id) => () => app.setNumberFormat({ decimalChar: id })
   );
   const numberFormatPreview = formatNumber(1234.5, numberFormat);
-  return { numberFormat, thousandsToggle, thousandsCharOptions, decimalsOptions, decimalCharOptions, numberFormatPreview };
+  return {
+    numberFormat,
+    thousandsToggle,
+    thousandsCharOptions,
+    decimalsOptions,
+    decimalCharOptions,
+    numberFormatPreview
+  };
 }
 
 export function buildViewData(app) {

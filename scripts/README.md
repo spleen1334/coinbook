@@ -1,5 +1,13 @@
 # Scripts
 
+## Verify PWA build artifacts
+
+```sh
+npm run verify:pwa
+```
+
+Builds the app for both the root path (`/`) and the GitHub Pages base path (`/coinbook/`), then checks each build output for: manifest and service worker presence, all three icon files actually on disk (and referenced correctly from the manifest), exactly one `<link rel="manifest">` tag and one Google Fonts stylesheet link (no duplicates), and every local asset reference in `index.html` correctly rooted under the configured base path. Exits non-zero if any check fails.
+
 ## Convert Monefy CSV to Coinbook CSV
 
 ```sh

@@ -18,7 +18,8 @@
     "format:check": "prettier . --check",
     "test": "vitest run",
     "test:watch": "vitest",
-    "check": "npm run format:check && npm run lint && npm run test && npm run build"
+    "verify:pwa": "node scripts/verify-pwa-build.mjs",
+    "check": "npm run format:check && npm run lint && npm run test && npm run verify:pwa"
   },
   "dependencies": {
     "react": "^18.3.1",
@@ -28,6 +29,7 @@
     "@eslint/js": "^9.32.0",
     "@vitejs/plugin-react": "^5.2.0",
     "eslint": "^9.32.0",
+    "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.20",
     "gh-pages": "^6.3.0",
