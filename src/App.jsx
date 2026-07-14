@@ -380,42 +380,31 @@ export default class App extends React.Component {
   exportCsv = () => {
     downloadFile(buildCsvExport(this.state.categories, this.state.expenses), 'coinbook-export.csv', 'text/csv');
   };
-  onImportJsonFile = (e) => {
+  readFileText(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = () => reject(reader.error);
+      reader.readAsText(file);
+    });
+  }
+
+  async importFile(e, parser) {
     const file = e.target.files && e.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => {
-      try {
-        const { categories, expenses: imported } = parseJsonImport(
-          reader.result,
-          this.state.categories,
-          isoOf(today())
-        );
-        this.requestExpenseTotalReplay();
-        this.setState((s) => ({ categories, expenses: [...imported, ...s.expenses] }));
-      } catch (err) {
-        this.showToast('Import failed', 'error');
-      }
-    };
-    reader.readAsText(file);
     e.target.value = '';
-  };
-  onImportCsvFile = (e) => {
-    const file = e.target.files && e.target.files[0];
     if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => {
-      try {
-        const { categories, expenses: imported } = parseCsvImport(reader.result, this.state.categories, isoOf(today()));
-        this.requestExpenseTotalReplay();
-        this.setState((s) => ({ categories, expenses: [...imported, ...s.expenses] }));
-      } catch (err) {
-        this.showToast('Import failed', 'error');
-      }
-    };
-    reader.readAsText(file);
-    e.target.value = '';
-  };
+    try {
+      const text = await this.readFileText(file);
+      const { categories, expenses: imported } = parser(text, this.state.categories, isoOf(today()));
+      this.requestExpenseTotalReplay();
+      this.setState((s) => ({ categories, expenses: [...imported, ...s.expenses] }));
+    } catch (err) {
+      this.showToast('Import failed', 'error');
+    }
+  }
+
+  onImportJsonFile = (e) => this.importFile(e, parseJsonImport);
+  onImportCsvFile = (e) => this.importFile(e, parseCsvImport);
   // ---------- add / edit sheet ----------
 
   openAdd = () =>
@@ -466,6 +455,13 @@ export default class App extends React.Component {
   confirmNewCategory = () => {
     const name = (this.state.newCatName || '').trim();
     if (!name) return;
+    const nameKey = name.toLowerCase();
+    const existing = this.state.categories.find((c) => c.name.toLowerCase() === nameKey);
+    if (existing) {
+      this.setState({ addCategoryId: existing.id, addingCategory: false, newCatName: '' });
+      this.showToast(UI_TEXT[this.state.language]?.categoryExistsToast || 'Category already exists');
+      return;
+    }
     const color = CATEGORY_SWATCHES[this.state.newCatColor % CATEGORY_SWATCHES.length];
     const id = 'custom_' + Date.now();
     this.setState((s) => ({
@@ -604,7 +600,31 @@ export default class App extends React.Component {
 
             {/* ===== SCROLLABLE CONTENT ===== */}
             <div className={`cb-content ${isGraph ? 'cb-content-graph' : ''}`}>
-              {isSettings && <SettingsScreen app={this} s={s} v={v} t={t} />}
+              {isSettings && (
+                <SettingsScreen
+                  t={t}
+                  languageOptions={v.languageOptions}
+                  currencyOptions={v.currencyOptions}
+                  numberFormat={v.numberFormat}
+                  thousandsToggle={v.thousandsToggle}
+                  thousandsCharOptions={v.thousandsCharOptions}
+                  decimalsOptions={v.decimalsOptions}
+                  decimalCharOptions={v.decimalCharOptions}
+                  numberFormatPreview={v.numberFormatPreview}
+                  usdRate={s.rates.USD}
+                  eurRate={s.rates.EUR}
+                  onRateChange={this.setRate}
+                  onRateBlur={this.finishRateEditing}
+                  canInstallApp={s.canInstallApp}
+                  onInstallApp={this.installApp}
+                  onExportJson={this.exportJson}
+                  onExportCsv={this.exportCsv}
+                  onImportJsonFile={this.onImportJsonFile}
+                  onImportCsvFile={this.onImportCsvFile}
+                  onDone={this.goHome}
+                  onOpenDeleteAll={this.openDeleteAll}
+                />
+              )}
               {isHome && <LedgerScreen key={s.swipeTick} anim={v.contentAnim} v={v} t={t} />}
               {isGraph && <ChartScreen key={s.swipeTick} anim={v.contentAnim} v={v} t={t} />}
             </div>
@@ -621,7 +641,33 @@ export default class App extends React.Component {
 
           {s.searchOpen && <SearchPopup app={this} s={s} v={v} />}
 
-          {s.showAdd && <AddSheet app={this} s={s} v={v} t={t} />}
+          {s.showAdd && (
+            <AddSheet
+              t={t}
+              isEditing={!!s.editingId}
+              isClosing={s.sheetClosing}
+              amount={s.addAmount}
+              onAmountChange={this.onAmountInput}
+              date={s.addDate}
+              onDateChange={this.onDateInput}
+              selectedCategoryColor={v.selectedCatObj.color}
+              selectedCategoryLabel={v.selectedCatLabel}
+              categoryPickerOpen={s.categoryPickerOpen}
+              onToggleCategoryPicker={this.toggleCategoryPicker}
+              categoriesForPicker={v.categoriesForPicker}
+              addingCategory={s.addingCategory}
+              onStartNewCategory={this.startNewCategory}
+              newCatName={s.newCatName}
+              onNewCatNameChange={this.onNewCatNameInput}
+              swatches={v.swatches}
+              onConfirmNewCategory={this.confirmNewCategory}
+              onCancelNewCategory={this.cancelNewCategory}
+              note={s.addNote}
+              onNoteChange={this.onNoteInput}
+              onClose={this.requestCloseAdd}
+              onSubmit={this.submitAdd}
+            />
+          )}
 
           {s.deleteModalId && <DeleteModal app={this} s={s} v={v} t={t} />}
 
