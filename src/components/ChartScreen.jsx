@@ -6,8 +6,8 @@ export function ChartScreen({ anim, v, t }) {
       <div className="cb-chart-hero">
         <div className="cb-chart-donut-wrap">
           <svg
-            width="188"
-            height="188"
+            width="204"
+            height="204"
             viewBox="0 0 100 100"
             style={{
               transform: 'rotate(-90deg)',
@@ -64,11 +64,7 @@ export function ChartScreen({ anim, v, t }) {
             </div>
             <div className="cb-legend-name">{seg.name}</div>
             <div className="cb-legend-percent">{seg.pctStr}</div>
-            <div className="cb-legend-amount">
-              {seg.amountParts.prefix && <span className="cb-inline-currency">{seg.amountParts.prefix}</span>}
-              <span>{seg.amountParts.amount}</span>
-              {seg.amountParts.suffix && <span className="cb-inline-currency">{seg.amountParts.suffix}</span>}
-            </div>
+            <div className="cb-legend-amount">{seg.amountParts.amount}</div>
           </div>
         ))}
       </div>

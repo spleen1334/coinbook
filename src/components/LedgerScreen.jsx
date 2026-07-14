@@ -26,7 +26,7 @@ export function LedgerScreen({ anim, v, t }) {
                 <div className="cb-group-bar" />
                 <div className="cb-group-title">
                   <div className="cb-group-label">{grp.dateLabel}</div>
-                  {grp.totalStr && <div className="cb-group-total">{grp.totalStr}</div>}
+                  {grp.totalParts && <div className="cb-group-total">{grp.totalParts.amount}</div>}
                 </div>
                 <div className="cb-group-rule" />
               </div>
@@ -61,9 +61,7 @@ export function LedgerScreen({ anim, v, t }) {
                     {row.hasNote && <div style={{ fontSize: 12, color: '#7a6a55' }}>{row.note}</div>}
                   </div>
                   <div className="cb-row-amount">
-                    {row.amountParts.prefix && <span className="cb-inline-currency">{row.amountParts.prefix}</span>}
                     <span>{row.amountParts.amount}</span>
-                    {row.amountParts.suffix && <span className="cb-inline-currency">{row.amountParts.suffix}</span>}
                   </div>
                   <div className="cb-round-btn cb-round-btn-sm hover-delete press-96" onClick={row.requestDelete}>
                     ✕

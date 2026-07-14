@@ -1073,26 +1073,17 @@ export default class App extends React.Component {
     );
     const ledgerPeriodButton = (direction) => (
       <div
-        className={`cb-period-coin cb-period-coin-${direction < 0 ? 'left' : 'right'}`}
+        className={`cb-ledger-period-arrow cb-ledger-period-arrow-${direction < 0 ? 'left' : 'right'} hover-chevron`}
         onClick={() => this.shiftPeriod(direction)}
       >
-        <svg className="cb-period-coin-icon" width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">
+        <svg className="cb-ledger-period-arrow-icon" width="18" height="30" viewBox="0 0 18 30" aria-hidden="true">
           <path
-            d={direction < 0 ? 'M10.8 4.2 6.2 9l4.6 4.8' : 'M7.2 4.2 11.8 9l-4.6 4.8'}
+            d={direction < 0 ? 'M13 4 5 15l8 11' : 'M5 4l8 11-8 11'}
             fill="none"
             stroke="currentColor"
-            strokeWidth="2.7"
+            strokeWidth="4"
             strokeLinecap="round"
             strokeLinejoin="round"
-          />
-          <path
-            d={direction < 0 ? 'M12.4 4.2 7.8 9l4.6 4.8' : 'M5.6 4.2 10.2 9l-4.6 4.8'}
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.4"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            opacity="0.38"
           />
         </svg>
       </div>
