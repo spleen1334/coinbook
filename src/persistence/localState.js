@@ -59,7 +59,7 @@ function normalizeExpenseRecords(raw, validCategoryIds) {
   return result;
 }
 
-function normalizePersistedState(saved) {
+export function normalizePersistedState(saved) {
   if (!saved || typeof saved !== 'object') return {};
   const out = {};
   const categories = normalizeCategoryRecords(saved.categories);
