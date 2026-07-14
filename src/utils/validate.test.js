@@ -82,7 +82,12 @@ describe('normalizeColor', () => {
     expect(normalizeColor('#aabbcc', '#fallback')).toBe('#aabbcc');
   });
 
-  it('rejects non-hex values, including injection attempts', () => {
+  it('accepts hsl/hsla colors, matching the app-generated default category palette', () => {
+    expect(normalizeColor('hsl(137, 32%, 34%)', '#fallback')).toBe('hsl(137, 32%, 34%)');
+    expect(normalizeColor('hsla(137, 32%, 34%, 0.5)', '#fallback')).toBe('hsla(137, 32%, 34%, 0.5)');
+  });
+
+  it('rejects non-hex/hsl values, including injection attempts', () => {
     expect(normalizeColor('javascript:alert(1)', '#fallback')).toBe('#fallback');
     expect(normalizeColor('red', '#fallback')).toBe('#fallback');
     expect(normalizeColor('url(evil)', '#fallback')).toBe('#fallback');
