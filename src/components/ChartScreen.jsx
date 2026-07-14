@@ -62,9 +62,13 @@ export function ChartScreen({ anim, v, t }) {
               <div className="cb-coin-legend-rim" />
               <span className="cb-coin-legend-letter">{seg.initial}</span>
             </div>
-            <div style={{ flex: 1, fontSize: 13, fontWeight: 700 }}>{seg.name}</div>
-            <div style={{ fontSize: 12, color: '#8a7355' }}>{seg.pctStr}</div>
-            <div style={{ fontSize: 13, fontWeight: 700, width: 66, textAlign: 'right' }}>{seg.amountStr}</div>
+            <div className="cb-legend-name">{seg.name}</div>
+            <div className="cb-legend-percent">{seg.pctStr}</div>
+            <div className="cb-legend-amount">
+              {seg.amountParts.prefix && <span className="cb-inline-currency">{seg.amountParts.prefix}</span>}
+              <span>{seg.amountParts.amount}</span>
+              {seg.amountParts.suffix && <span className="cb-inline-currency">{seg.amountParts.suffix}</span>}
+            </div>
           </div>
         ))}
       </div>

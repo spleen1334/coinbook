@@ -271,8 +271,13 @@ a:hover {
 .hover-fab:hover {
   transform: scale(1.07);
 }
-.hover-fab:active {
-  transform: scale(0.92);
+.hover-fab:active,
+.press-fab:active {
+  transform: translateY(3px) scale(0.94);
+  box-shadow:
+    0 1px 0 #7a2a1c,
+    0 3px 8px rgba(0, 0, 0, 0.28),
+    inset 0 2px 5px rgba(65, 18, 8, 0.22);
 }
 .hover-delete:hover {
   background: #b5432e;
@@ -476,6 +481,10 @@ a:hover {
   touch-action: pan-y;
   user-select: none;
   cursor: grab;
+  min-height: 132px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 .cb-ticket {
   position: relative;
@@ -526,6 +535,8 @@ a:hover {
 }
 .cb-total-value .cb-currency-badge {
   flex: none;
+  width: 36px;
+  height: 36px;
   transform: translateY(-1px);
 }
 .cb-period-nav {
@@ -566,6 +577,79 @@ a:hover {
   padding: 3px 11px;
   border-radius: 11px;
   border: 1px solid rgba(44, 36, 22, 0.2);
+}
+.cb-period-pill-ticket {
+  width: fit-content;
+  margin: 9px auto 0;
+}
+.cb-period-coin {
+  position: absolute;
+  top: 50%;
+  z-index: 4;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #5e4728;
+  line-height: 1;
+  cursor: pointer;
+  background:
+    radial-gradient(circle at 34% 28%, rgba(255, 255, 255, 0.65) 0 13%, transparent 14%),
+    radial-gradient(circle at 50% 52%, #d9b65f 0 48%, #a86f2e 49% 100%);
+  border: 2px solid rgba(91, 59, 26, 0.42);
+  box-shadow:
+    inset 0 2px 2px rgba(255, 246, 203, 0.5),
+    inset 0 -3px 4px rgba(79, 41, 13, 0.3),
+    0 4px 0 rgba(91, 54, 18, 0.45),
+    0 7px 12px rgba(44, 36, 22, 0.18);
+  transform: translateY(-50%) rotate(-7deg);
+  transition:
+    transform 0.16s ease,
+    box-shadow 0.16s ease,
+    filter 0.16s ease;
+}
+.cb-period-coin-icon {
+  position: relative;
+  z-index: 1;
+  width: 18px;
+  height: 18px;
+  color: #65441f;
+  filter: drop-shadow(0 1px 0 rgba(255, 238, 171, 0.75)) drop-shadow(0 -1px 0 rgba(80, 43, 13, 0.25));
+  transform: rotate(0.5deg);
+}
+.cb-period-coin::after {
+  content: '';
+  position: absolute;
+  inset: 6px;
+  border-radius: 50%;
+  border: 1px dashed rgba(94, 71, 40, 0.45);
+  pointer-events: none;
+}
+.cb-period-coin-left {
+  left: 2px;
+}
+.cb-period-coin-right {
+  right: 2px;
+  transform: translateY(-50%) rotate(7deg);
+}
+.cb-period-coin:hover {
+  filter: saturate(1.08) brightness(1.03);
+  transform: translateY(calc(-50% - 2px)) rotate(-7deg);
+}
+.cb-period-coin-right:hover {
+  transform: translateY(calc(-50% - 2px)) rotate(7deg);
+}
+.cb-period-coin:active {
+  box-shadow:
+    inset 0 2px 5px rgba(79, 41, 13, 0.28),
+    0 1px 0 rgba(91, 54, 18, 0.45),
+    0 3px 7px rgba(44, 36, 22, 0.16);
+  transform: translateY(calc(-50% + 2px)) scale(0.94) rotate(-7deg);
+}
+.cb-period-coin-right:active {
+  transform: translateY(calc(-50% + 2px)) scale(0.94) rotate(7deg);
 }
 
 .cb-perforation {
@@ -762,12 +846,25 @@ a:hover {
   background: #b5432e;
   flex: none;
 }
+.cb-group-title {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
 .cb-group-label {
   font-size: 12.5px;
   letter-spacing: 1.5px;
   color: #2c2416;
   font-weight: 700;
   text-transform: uppercase;
+}
+.cb-group-total {
+  font-size: 10px;
+  letter-spacing: 0.6px;
+  color: #b5432e;
+  font-weight: 700;
+  white-space: nowrap;
 }
 .cb-group-rule {
   flex: 1;
@@ -807,6 +904,22 @@ a:hover {
   border-bottom: 1px solid rgba(139, 120, 80, 0.18);
   cursor: pointer;
   touch-action: pan-y;
+}
+.cb-row-amount {
+  display: flex;
+  align-items: baseline;
+  justify-content: flex-end;
+  gap: 3px;
+  font-size: 15px;
+  font-weight: 700;
+  color: #b5432e;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.cb-inline-currency {
+  font-size: 0.72em;
+  letter-spacing: 0.2px;
+  opacity: 0.9;
 }
 
 .cb-coin-badge-ring {
@@ -925,13 +1038,58 @@ a:hover {
   display: flex;
   align-items: center;
   gap: 9px;
-  padding: 7px 6px;
+  padding: 7px 18px 7px 6px;
   border-radius: 8px;
   border-bottom: 1px solid #c9b98f;
   cursor: pointer;
   transition:
     background 0.15s ease,
     opacity 0.15s ease;
+}
+.cb-legend-name {
+  flex: 1;
+  min-width: 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: #2c2416;
+}
+.cb-legend-percent {
+  flex: none;
+  min-width: 44px;
+  margin-right: 2px;
+  text-align: center;
+  font-family:
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    sans-serif;
+  font-size: 11.5px;
+  font-weight: 800;
+  letter-spacing: 0.1px;
+  color: #734f28;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  padding: 3px 7px 2px;
+  border-radius: 999px;
+  background: rgba(181, 67, 46, 0.08);
+  border: 1px solid rgba(138, 115, 85, 0.22);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.42);
+}
+.cb-legend-amount {
+  display: flex;
+  align-items: baseline;
+  justify-content: flex-end;
+  gap: 3px;
+  flex: none;
+  width: 82px;
+  text-align: right;
+  font-size: 13px;
+  font-weight: 800;
+  color: #2c2416;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.1px;
 }
 .cb-coin-legend-face {
   position: relative;
@@ -1345,16 +1503,16 @@ a:hover {
     inset 0 1px 1px rgba(255, 255, 255, 0.18);
 }
 .cb-currency-badge-sm {
-  width: 28px;
-  height: 28px;
+  width: 23px;
+  height: 23px;
 }
 .cb-currency-badge-md {
-  width: 32px;
-  height: 32px;
+  width: 27px;
+  height: 27px;
 }
 .cb-currency-badge-lg {
-  width: 38px;
-  height: 38px;
+  width: 34px;
+  height: 34px;
 }
 .cb-currency-badge-face {
   position: relative;
@@ -1388,7 +1546,7 @@ a:hover {
 .cb-currency-badge-letter {
   position: relative;
   font-family: 'Special Elite', monospace;
-  font-size: 11px;
+  font-size: 9px;
   line-height: 1;
   color: #f4ecd8;
   text-shadow: 0 1px 1px rgba(0, 0, 0, 0.32);
@@ -1396,8 +1554,8 @@ a:hover {
   letter-spacing: 0.2px;
 }
 .cb-currency-badge-letter-rsd {
-  font-size: 8px;
-  letter-spacing: 0.8px;
+  font-size: 6.5px;
+  letter-spacing: 0.55px;
 }
 .cb-currency-badge-usd .cb-currency-badge-face {
   background:

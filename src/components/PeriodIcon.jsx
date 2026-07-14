@@ -12,13 +12,23 @@ export function PeriodIcon({ id }) {
   if (id === 'week')
     return (
       <svg width="16" height="14" viewBox="0 0 16 14">
-        <rect x="0" y="3" width="1.6" height="8" fill="currentColor" />
-        <rect x="2.4" y="1" width="1.6" height="12" fill="currentColor" />
-        <rect x="4.8" y="4" width="1.6" height="6" fill="currentColor" />
-        <rect x="7.2" y="0" width="1.6" height="14" fill="currentColor" />
-        <rect x="9.6" y="3" width="1.6" height="8" fill="currentColor" />
-        <rect x="12" y="1" width="1.6" height="12" fill="currentColor" />
-        <rect x="14.4" y="4" width="1.6" height="6" fill="currentColor" />
+        <rect x="1" y="2" width="14" height="10.5" rx="1.7" fill="none" stroke="currentColor" strokeWidth="1.2" />
+        <line x1="1" y1="5" x2="15" y2="5" stroke="currentColor" strokeWidth="1.2" />
+        <line x1="4" y1="0.8" x2="4" y2="3.2" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+        <line x1="12" y1="0.8" x2="12" y2="3.2" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+        <circle cx="3.3" cy="8" r="0.75" fill="currentColor" />
+        <circle cx="5.6" cy="8" r="0.75" fill="currentColor" />
+        <circle cx="7.9" cy="8" r="0.75" fill="currentColor" />
+        <circle cx="10.2" cy="8" r="0.75" fill="currentColor" />
+        <circle cx="12.5" cy="8" r="0.75" fill="currentColor" />
+        <path
+          d="M3.1 10.5h9.8"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.2"
+          strokeLinecap="round"
+          opacity="0.55"
+        />
       </svg>
     );
   if (id === 'month')
@@ -32,9 +42,14 @@ export function PeriodIcon({ id }) {
     );
   return (
     <svg width="14" height="14" viewBox="0 0 14 14">
-      <circle cx="7" cy="7" r="6.3" fill="none" stroke="currentColor" strokeWidth="1.2" />
-      <line x1="7" y1="0.7" x2="7" y2="13.3" stroke="currentColor" strokeWidth="1.2" />
-      <line x1="0.7" y1="7" x2="13.3" y2="7" stroke="currentColor" strokeWidth="1.2" />
+      <rect x="1" y="1.7" width="12" height="11.3" rx="1.5" fill="none" stroke="currentColor" strokeWidth="1.2" />
+      <line x1="1" y1="5" x2="13" y2="5" stroke="currentColor" strokeWidth="1.2" />
+      <line x1="4" y1="0.6" x2="4" y2="3" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+      <line x1="10" y1="0.6" x2="10" y2="3" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+      <rect x="3" y="6.5" width="2.7" height="2" rx="0.4" fill="currentColor" />
+      <rect x="8.3" y="6.5" width="2.7" height="2" rx="0.4" fill="currentColor" opacity="0.72" />
+      <rect x="3" y="9.8" width="2.7" height="2" rx="0.4" fill="currentColor" opacity="0.72" />
+      <rect x="8.3" y="9.8" width="2.7" height="2" rx="0.4" fill="currentColor" />
     </svg>
   );
 }

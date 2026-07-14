@@ -44,6 +44,9 @@ export default class App extends React.Component {
       rates: DEFAULT_RATES,
       numberFormat: { thousands: true, thousandsChar: ',', decimals: 2, decimalChar: '.' },
       listGrouping: 'date',
+      dateSortDir: 'desc',
+      categorySortDir: 'desc',
+      ungroupedSortDir: 'desc',
       hoverCatId: null,
       searchOpen: false,
       searchQuery: '',
@@ -129,6 +132,9 @@ export default class App extends React.Component {
         prev.rates !== s.rates ||
         prev.numberFormat !== s.numberFormat ||
         prev.listGrouping !== s.listGrouping ||
+        prev.dateSortDir !== s.dateSortDir ||
+        prev.categorySortDir !== s.categorySortDir ||
+        prev.ungroupedSortDir !== s.ungroupedSortDir ||
         prev.period !== s.period)
     ) {
       savePersistedStateAsync(s);
@@ -157,6 +163,9 @@ export default class App extends React.Component {
       rates: s.rates,
       numberFormat: s.numberFormat,
       listGrouping: s.listGrouping,
+      dateSortDir: s.dateSortDir,
+      categorySortDir: s.categorySortDir,
+      ungroupedSortDir: s.ungroupedSortDir,
       period: s.period
     };
   }
@@ -299,6 +308,18 @@ export default class App extends React.Component {
       : formatNumber(value, this.state.numberFormat);
   }
 
+  convertAndFormatParts(amount, cur) {
+    const storedRate = this.state.rates && this.state.rates[cur];
+    const parsedRate = Number(String(storedRate).replace(',', '.'));
+    const fallbackRate = DEFAULT_RATES[cur] || 1;
+    const rate = Number.isFinite(parsedRate) && parsedRate > 0 ? parsedRate : fallbackRate;
+    const value = amount * rate;
+    const amountText = formatNumber(value, this.state.numberFormat);
+    if (cur === 'EUR') return { amount: amountText, suffix: '€' };
+    if (cur === 'RSD') return { prefix: 'RSD', amount: amountText };
+    return { prefix: '$', amount: amountText };
+  }
+
   // ---------- total counter animation ----------
 
   animateTotal = (target, fromZero) => {
@@ -409,6 +430,20 @@ export default class App extends React.Component {
   setListGrouping = (mode) =>
     this.setState((s) => ({
       listGrouping: mode,
+      dateSortDir:
+        mode === 'date' && s.listGrouping === 'date' ? (s.dateSortDir === 'desc' ? 'asc' : 'desc') : s.dateSortDir,
+      categorySortDir:
+        mode === 'category' && s.listGrouping === 'category'
+          ? s.categorySortDir === 'desc'
+            ? 'asc'
+            : 'desc'
+          : s.categorySortDir,
+      ungroupedSortDir:
+        mode === 'none' && s.listGrouping === 'none'
+          ? s.ungroupedSortDir === 'desc'
+            ? 'asc'
+            : 'desc'
+          : s.ungroupedSortDir,
       swipeDir: 0,
       lastAction: 'period',
       swipeTick: (s.swipeTick || 0) + 1
@@ -678,7 +713,17 @@ export default class App extends React.Component {
 
     const query = (this.state.searchQuery || '').trim().toLowerCase();
     const isSearching = query.length > 0;
-    const filtered = this.getFilteredExpenses().sort((a, b) => (b.date < a.date ? -1 : b.date > a.date ? 1 : 0));
+    const filtered = this.getFilteredExpenses();
+    const sortByDate = (rows, dir = 'desc') =>
+      rows.slice().sort((a, b) => (dir === 'asc' ? a.date.localeCompare(b.date) : b.date.localeCompare(a.date)));
+    const sortByAmount = (rows, dir = 'desc') =>
+      rows
+        .slice()
+        .sort((a, b) =>
+          dir === 'asc'
+            ? a.amount - b.amount || a.date.localeCompare(b.date)
+            : b.amount - a.amount || b.date.localeCompare(a.date)
+        );
     const total = filtered.reduce((s, e) => s + e.amount, 0);
     const hasEntries = filtered.length > 0;
 
@@ -696,6 +741,7 @@ export default class App extends React.Component {
         note: r.note,
         hasNote: !!r.note,
         amountStr: this.convertAndFormat(r.amount, cur),
+        amountParts: this.convertAndFormatParts(r.amount, cur),
         dateShort: formatShortDate(r.date, lang, MONTHS_BY_LANGUAGE, MONTHS),
         stampAnim: r.id === this.state.lastAddedId ? 'cbStampIn 0.35s ease-out' : 'none',
         requestDelete: (e) => {
@@ -716,7 +762,7 @@ export default class App extends React.Component {
     let groupedList;
     if (grouping === 'category') {
       const byCat = new Map();
-      filtered.forEach((e) => {
+      sortByAmount(filtered, this.state.categorySortDir).forEach((e) => {
         if (!byCat.has(e.categoryId)) byCat.set(e.categoryId, []);
         byCat.get(e.categoryId).push(e);
       });
@@ -727,12 +773,14 @@ export default class App extends React.Component {
           return {
             key: catId,
             dateLabel: this.catLabel(cat),
+            totalStr: this.convertAndFormat(sum, cur),
+            totalParts: this.convertAndFormatParts(sum, cur),
             showHeader: true,
             sortKey: sum,
             rows: rows.map((r) => ({ ...mkRow(r), showDateInline: true }))
           };
         })
-        .sort((a, b) => b.sortKey - a.sortKey);
+        .sort((a, b) => (this.state.categorySortDir === 'asc' ? a.sortKey - b.sortKey : b.sortKey - a.sortKey));
     } else if (grouping === 'none') {
       groupedList = filtered.length
         ? [
@@ -740,13 +788,16 @@ export default class App extends React.Component {
               key: 'all',
               dateLabel: '',
               showHeader: false,
-              rows: filtered.map((r) => ({ ...mkRow(r), showDateInline: true }))
+              rows: sortByAmount(filtered, this.state.ungroupedSortDir).map((r) => ({
+                ...mkRow(r),
+                showDateInline: true
+              }))
             }
           ]
         : [];
     } else {
       const byDate = new Map();
-      filtered.forEach((e) => {
+      sortByDate(filtered, this.state.dateSortDir).forEach((e) => {
         if (!byDate.has(e.date)) byDate.set(e.date, []);
         byDate.get(e.date).push(e);
       });
@@ -779,6 +830,7 @@ export default class App extends React.Component {
         initial: label.charAt(0).toUpperCase(),
         face: coinFace(isDimmed ? '#c9b98f' : c.cat.color),
         amountStr: this.convertAndFormat(c.amt, cur),
+        amountParts: this.convertAndFormatParts(c.amt, cur),
         pctStr: Math.round(pct) + '%',
         dasharray: segLen.toFixed(2) + ' ' + (CIRC - segLen).toFixed(2),
         dashoffset: (-cum).toFixed(2),
@@ -864,8 +916,23 @@ export default class App extends React.Component {
       { id: 'none', label: 'UNGROUPED' }
     ].map((o) => {
       const active = this.state.listGrouping === o.id;
+      const sortMark =
+        active && o.id === 'date'
+          ? this.state.dateSortDir === 'desc'
+            ? ' ↓'
+            : ' ↑'
+          : active && o.id === 'category'
+            ? this.state.categorySortDir === 'desc'
+              ? ' ↓'
+              : ' ↑'
+            : active && o.id === 'none'
+              ? this.state.ungroupedSortDir === 'desc'
+                ? ' ↓'
+                : ' ↑'
+              : '';
       return {
         ...o,
+        label: o.label + sortMark,
         select: () => this.setListGrouping(o.id),
         bg: active ? accent : '#f4ecd8',
         fg: active ? paperFg : '#8a7355',
@@ -1004,6 +1071,32 @@ export default class App extends React.Component {
         <div className="cb-flourish" />
       </div>
     );
+    const ledgerPeriodButton = (direction) => (
+      <div
+        className={`cb-period-coin cb-period-coin-${direction < 0 ? 'left' : 'right'}`}
+        onClick={() => this.shiftPeriod(direction)}
+      >
+        <svg className="cb-period-coin-icon" width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">
+          <path
+            d={direction < 0 ? 'M10.8 4.2 6.2 9l4.6 4.8' : 'M7.2 4.2 11.8 9l-4.6 4.8'}
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.7"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+          <path
+            d={direction < 0 ? 'M12.4 4.2 7.8 9l4.6 4.8' : 'M5.6 4.2 10.2 9l-4.6 4.8'}
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.4"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            opacity="0.38"
+          />
+        </svg>
+      </div>
+    );
 
     return (
       <div className="cb-outer">
@@ -1094,6 +1187,7 @@ export default class App extends React.Component {
                           onMouseDown={this.handleSwipeStart}
                           onMouseUp={this.handleSwipeEnd}
                         >
+                          {ledgerPeriodButton(-1)}
                           <div className="cb-ticket">
                             <CoinScatter tick={s.coinBurstTick} />
                             <div className="cb-total-label">{t.totalSpent}</div>
@@ -1103,8 +1197,9 @@ export default class App extends React.Component {
                               </span>
                               <CurrencyBadge currency={s.currency} size="md" />
                             </div>
-                            {periodNav}
+                            <div className="cb-period-pill cb-period-pill-ticket">{this.getPeriodLabel()}</div>
                           </div>
+                          {ledgerPeriodButton(1)}
                         </div>
                       )}
                     </>
@@ -1144,7 +1239,7 @@ export default class App extends React.Component {
                 </div>
                 <div className="cb-nav-label">{t.navLedger}</div>
               </div>
-              <div className="cb-fab hover-fab" onClick={this.openAdd}>
+              <div className="cb-fab hover-fab press-fab" onClick={this.openAdd}>
                 +
               </div>
               <div
