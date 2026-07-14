@@ -14,7 +14,7 @@ import {
 } from './utils/format.js';
 import { downloadFile } from './utils/download.js';
 import { fuzzyMatch } from './utils/search.js';
-import { defaultCatColor } from './utils/coin.js';
+import { hashCatColor } from './utils/coin.js';
 import {
   DEFAULT_RATES,
   loadPersistedState,
@@ -92,7 +92,7 @@ export default class App extends React.Component {
       sheetClosing: false,
       canInstallApp: false,
       persistenceReady: false,
-      categories: CATEGORY_DEFINITIONS.map((c, i) => ({ id: c.id, name: c.name, color: defaultCatColor(i) })),
+      categories: CATEGORY_DEFINITIONS.map((c) => ({ id: c.id, name: c.name, color: hashCatColor(c.name) })),
       expenses: buildSeedExpenses()
     };
     this._totalAnimator = createTotalAnimator({
@@ -389,7 +389,6 @@ export default class App extends React.Component {
         const { categories, expenses: imported } = parseJsonImport(
           reader.result,
           this.state.categories,
-          CATEGORY_SWATCHES,
           isoOf(today())
         );
         this.requestExpenseTotalReplay();
@@ -407,12 +406,7 @@ export default class App extends React.Component {
     const reader = new FileReader();
     reader.onload = () => {
       try {
-        const { categories, expenses: imported } = parseCsvImport(
-          reader.result,
-          this.state.categories,
-          CATEGORY_SWATCHES,
-          isoOf(today())
-        );
+        const { categories, expenses: imported } = parseCsvImport(reader.result, this.state.categories, isoOf(today()));
         this.requestExpenseTotalReplay();
         this.setState((s) => ({ categories, expenses: [...imported, ...s.expenses] }));
       } catch (err) {
@@ -567,7 +561,7 @@ export default class App extends React.Component {
     this.requestExpenseTotalReplay();
     this.setState({
       expenses: [],
-      categories: CATEGORY_DEFINITIONS.map((c, i) => ({ id: c.id, name: c.name, color: defaultCatColor(i) })),
+      categories: CATEGORY_DEFINITIONS.map((c) => ({ id: c.id, name: c.name, color: hashCatColor(c.name) })),
       deleteAllOpen: false,
       deleteAllText: '',
       screen: 'settings'

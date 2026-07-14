@@ -5,7 +5,7 @@ export function buildJsonExport(categories, expenses) {
   return JSON.stringify({ categories, expenses }, null, 2);
 }
 
-export function parseJsonImport(text, currentCategories, swatches, fallbackDate) {
+export function parseJsonImport(text, currentCategories, fallbackDate) {
   let data;
   try {
     data = JSON.parse(text);
@@ -16,8 +16,7 @@ export function parseJsonImport(text, currentCategories, swatches, fallbackDate)
 
   const { categories, catByName, catById } = mergeImportedCategories(
     currentCategories,
-    Array.isArray(data.categories) ? data.categories : [],
-    swatches
+    Array.isArray(data.categories) ? data.categories : []
   );
   const importTick = Date.now();
   const expenses = data.expenses.map((raw, i) => {

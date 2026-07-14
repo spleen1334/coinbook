@@ -26,6 +26,10 @@ export function normalizeNote(value) {
   return value.trim().slice(0, MAX_NOTE_LENGTH);
 }
 
+export function isHexColor(value) {
+  return typeof value === 'string' && HEX_COLOR_RE.test(value.trim());
+}
+
 export function normalizeColor(value, fallback) {
   if (typeof value !== 'string') return fallback;
   const trimmed = value.trim();

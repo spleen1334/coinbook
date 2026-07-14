@@ -1,7 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { buildCsvExport, parseCsvImport } from './csv.js';
 
-const swatches = ['#8a5a3b', '#3f6b52'];
 const categories = [
   { id: 'food', name: 'Food', color: '#8a5a3b' },
   { id: 'other', name: 'Other', color: '#888888' }
@@ -32,41 +31,41 @@ describe('parseCsvImport', () => {
 
   it('parses valid rows into expense records', () => {
     const text = `${header}\n2026-07-01,Food,42.50,Coffee`;
-    const { expenses } = parseCsvImport(text, categories, swatches, '2026-01-01');
+    const { expenses } = parseCsvImport(text, categories, '2026-01-01');
     expect(expenses).toHaveLength(1);
     expect(expenses[0]).toMatchObject({ amount: 42.5, date: '2026-07-01', categoryId: 'food', note: 'Coffee' });
   });
 
   it('throws when required headers are missing', () => {
-    expect(() => parseCsvImport('a,b,c\n1,2,3', categories, swatches, '2026-01-01')).toThrow();
+    expect(() => parseCsvImport('a,b,c\n1,2,3', categories, '2026-01-01')).toThrow();
   });
 
   it('throws on an empty file', () => {
-    expect(() => parseCsvImport('', categories, swatches, '2026-01-01')).toThrow();
+    expect(() => parseCsvImport('', categories, '2026-01-01')).toThrow();
   });
 
   it('rejects a non-numeric amount to 0 instead of crashing', () => {
     const text = `${header}\n2026-07-01,Food,not-a-number,note`;
-    const { expenses } = parseCsvImport(text, categories, swatches, '2026-01-01');
+    const { expenses } = parseCsvImport(text, categories, '2026-01-01');
     expect(expenses[0].amount).toBe(0);
   });
 
   it('rejects an invalid date to the fallback date', () => {
     const text = `${header}\nnot-a-date,Food,10,note`;
-    const { expenses } = parseCsvImport(text, categories, swatches, '2026-01-01');
+    const { expenses } = parseCsvImport(text, categories, '2026-01-01');
     expect(expenses[0].date).toBe('2026-01-01');
   });
 
   it('creates a new category for an unrecognized category name', () => {
     const text = `${header}\n2026-07-01,Travel,10,note`;
-    const { categories: merged, expenses } = parseCsvImport(text, categories, swatches, '2026-01-01');
+    const { categories: merged, expenses } = parseCsvImport(text, categories, '2026-01-01');
     expect(merged.some((c) => c.name === 'Travel')).toBe(true);
     expect(expenses[0].categoryId).toBe(merged.find((c) => c.name === 'Travel').id);
   });
 
   it('falls back to the canonical "other" category when category cell is blank', () => {
     const text = `${header}\n2026-07-01,,10,note`;
-    const { expenses } = parseCsvImport(text, categories, swatches, '2026-01-01');
+    const { expenses } = parseCsvImport(text, categories, '2026-01-01');
     expect(expenses[0].categoryId).toBe('other');
   });
 });

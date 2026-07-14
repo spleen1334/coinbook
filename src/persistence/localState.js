@@ -1,10 +1,5 @@
-import {
-  normalizeAmount,
-  normalizeColor,
-  normalizeIdString,
-  normalizeNote,
-  isValidDateString
-} from '../utils/validate.js';
+import { normalizeAmount, isHexColor, normalizeIdString, normalizeNote, isValidDateString } from '../utils/validate.js';
+import { hashCatColor } from '../utils/coin.js';
 
 export const STORAGE_KEY = 'coinbook_v1_state';
 const DB_NAME = STORAGE_KEY;
@@ -37,7 +32,11 @@ function normalizeCategoryRecords(raw) {
     const name = typeof c.name === 'string' ? c.name.trim().slice(0, 100) : '';
     if (!id || !name || seenIds.has(id)) return;
     seenIds.add(id);
-    result.push({ id, name, color: normalizeColor(c.color, '#8a7355') });
+    // Only a hex color is treated as an intentional user pick (the swatch picker only
+    // ever produces hex). Anything else — missing, invalid, or an hsl() color from the
+    // old index-based or current name-hash auto-coloring — is (re)derived from the name,
+    // so previously auto-colored categories self-heal to the current scheme on load.
+    result.push({ id, name, color: isHexColor(c.color) ? c.color.trim() : hashCatColor(name) });
   });
   return result;
 }

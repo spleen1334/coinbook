@@ -1,4 +1,5 @@
 import { normalizeColor } from '../utils/validate.js';
+import { hashCatColor } from '../utils/coin.js';
 
 const MAX_NAME_LENGTH = 100;
 const SAFE_ID_RE = /^[a-zA-Z0-9_-]{1,64}$/;
@@ -8,7 +9,7 @@ function safeSourceId(rawId) {
   return SAFE_ID_RE.test(id) ? id : '';
 }
 
-export function mergeImportedCategories(currentCategories, importedCategories, swatches) {
+export function mergeImportedCategories(currentCategories, importedCategories) {
   const categories = [...currentCategories];
   const catByName = new Map();
   const catById = new Map();
@@ -41,7 +42,7 @@ export function mergeImportedCategories(currentCategories, importedCategories, s
     categories.push({
       id,
       name,
-      color: normalizeColor(c.color, swatches[(categories.length - currentCategories.length) % swatches.length])
+      color: normalizeColor(c.color, hashCatColor(name))
     });
   });
 

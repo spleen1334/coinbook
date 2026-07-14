@@ -1,5 +1,6 @@
 import { describe, it, expect, afterEach, vi } from 'vitest';
 import { normalizePersistedState, pickPersistedState, loadPersistedState, DEFAULT_RATES } from './localState.js';
+import { hashCatColor } from '../utils/coin.js';
 
 describe('normalizePersistedState', () => {
   it('returns an empty object for non-object input', () => {
@@ -84,14 +85,24 @@ describe('normalizePersistedState', () => {
     expect(out.categories[0].name).toBe('Food');
   });
 
-  it('falls back to a default color for an invalid category color', () => {
+  it('derives a color from the category name for an invalid category color', () => {
     const out = normalizePersistedState({
       categories: [{ id: 'food', name: 'Food', color: 'javascript:alert(1)' }]
     });
-    expect(out.categories[0].color).toBe('#8a7355');
+    expect(out.categories[0].color).toBe(hashCatColor('Food'));
   });
 
-  it('preserves app-generated hsl() category colors across a persisted round-trip (regression: all categories collapsing to one color)', () => {
+  it('preserves an explicit hex category color (the only color format the swatch picker produces)', () => {
+    const out = normalizePersistedState({
+      categories: [{ id: 'food', name: 'Food', color: '#123456' }]
+    });
+    expect(out.categories[0].color).toBe('#123456');
+  });
+
+  it('self-heals hsl() category colors to the current name-hash scheme on every load (regression: all categories collapsing to one color)', () => {
+    // Any hsl() color — whether from the old index-based scheme or a previous
+    // hash-based color for a category that has since been renamed — is
+    // recomputed from the current name on every load, so it never goes stale.
     const out = normalizePersistedState({
       categories: [
         { id: 'food', name: 'Food', color: 'hsl(0, 32%, 34%)' },
@@ -100,7 +111,7 @@ describe('normalizePersistedState', () => {
       ]
     });
     const colors = out.categories.map((c) => c.color);
-    expect(colors).toEqual(['hsl(0, 32%, 34%)', 'hsl(138, 32%, 34%)', 'hsl(275, 32%, 34%)']);
+    expect(colors).toEqual([hashCatColor('Food'), hashCatColor('Fuel'), hashCatColor('Bills')]);
     expect(new Set(colors).size).toBe(3);
   });
 
