@@ -25,12 +25,14 @@ import { SearchPopup } from './components/SearchPopup.jsx';
 import { buildJsonExport, parseJsonImport } from './importExport/json.js';
 import { buildCsvExport, parseCsvImport } from './importExport/csv.js';
 
-const TODAY = new Date();
+function today() {
+  return new Date();
+}
 
 function buildSeedExpenses() {
   return DEMO_EXPENSES.map((s, i) => {
     const [amount, dayOffset, categoryId, note] = s;
-    const d = new Date(TODAY);
+    const d = today();
     d.setDate(d.getDate() + dayOffset);
     return { id: 'e' + i, amount, date: isoOf(d), categoryId, note };
   });
@@ -59,7 +61,7 @@ export default class App extends React.Component {
       lastAddedId: null,
       editingId: null,
       addAmount: '',
-      addDate: isoOf(TODAY),
+      addDate: isoOf(today()),
       addCategoryId: 'food',
       addNote: '',
       addingCategory: false,
@@ -139,7 +141,10 @@ export default class App extends React.Component {
         prev.rates !== s.rates ||
         prev.numberFormat !== s.numberFormat ||
         prev.listGrouping !== s.listGrouping ||
-        prev.period !== s.period)
+        prev.period !== s.period ||
+        prev.dateSortDir !== s.dateSortDir ||
+        prev.categorySortDir !== s.categorySortDir ||
+        prev.ungroupedSortDir !== s.ungroupedSortDir)
     ) {
       savePersistedStateAsync(s);
     }
@@ -175,17 +180,17 @@ export default class App extends React.Component {
   }
 
   getRange() {
-    return getRange$(this.state.period, this.state.periodOffset, TODAY);
+    return getRange$(this.state.period, this.state.periodOffset, today());
   }
 
   getPeriodLabel() {
-    return getPeriodLabel$(this.state.period, this.state.periodOffset, this.state.language, TODAY, UI_TEXT, MONTHS_BY_LANGUAGE, MONTHS);
+    return getPeriodLabel$(this.state.period, this.state.periodOffset, this.state.language, today(), UI_TEXT, MONTHS_BY_LANGUAGE, MONTHS);
   }
 
   getFilteredExpenses() {
     const lang = this.state.language;
     const [start, end] = this.getRange();
-    const catById = {};
+    const catById = Object.create(null);
     this.state.categories.forEach((c) => {
       catById[c.id] = c;
     });
@@ -369,7 +374,7 @@ export default class App extends React.Component {
           reader.result,
           this.state.categories,
           CATEGORY_SWATCHES,
-          isoOf(TODAY)
+          isoOf(today())
         );
         this.requestExpenseTotalReplay();
         this.setState((s) => ({ categories, expenses: [...imported, ...s.expenses] }));
@@ -390,7 +395,7 @@ export default class App extends React.Component {
           reader.result,
           this.state.categories,
           CATEGORY_SWATCHES,
-          isoOf(TODAY)
+          isoOf(today())
         );
         this.requestExpenseTotalReplay();
         this.setState((s) => ({ categories, expenses: [...imported, ...s.expenses] }));
@@ -409,7 +414,7 @@ export default class App extends React.Component {
       sheetClosing: false,
       editingId: null,
       addAmount: '',
-      addDate: isoOf(TODAY),
+      addDate: isoOf(today()),
       addCategoryId: 'food',
       addNote: '',
       addingCategory: false,
@@ -467,7 +472,7 @@ export default class App extends React.Component {
     this.requestExpenseTotalReplay();
     if (this.state.editingId) {
       const editId = this.state.editingId;
-      const date = this.state.addDate || isoOf(TODAY);
+      const date = this.state.addDate || isoOf(today());
       const categoryId = this.state.addCategoryId;
       const note = (this.state.addNote || '').trim();
       this.setState((s) => ({
@@ -485,7 +490,7 @@ export default class App extends React.Component {
       const entry = {
         id,
         amount: amt,
-        date: this.state.addDate || isoOf(TODAY),
+        date: this.state.addDate || isoOf(today()),
         categoryId: this.state.addCategoryId,
         note: (this.state.addNote || '').trim()
       };

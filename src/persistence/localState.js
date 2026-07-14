@@ -13,6 +13,12 @@ function getLocalStorage() {
   }
 }
 
+const SORT_DIRS = ['asc', 'desc'];
+
+function normalizeSortDir(value, fallback) {
+  return SORT_DIRS.includes(value) ? value : fallback;
+}
+
 function normalizePersistedState(saved) {
   if (!saved || typeof saved !== 'object') return {};
   const out = {};
@@ -24,6 +30,9 @@ function normalizePersistedState(saved) {
   if (saved.numberFormat) out.numberFormat = saved.numberFormat;
   if (saved.listGrouping) out.listGrouping = saved.listGrouping;
   if (saved.period) out.period = saved.period;
+  if (saved.dateSortDir) out.dateSortDir = normalizeSortDir(saved.dateSortDir, 'desc');
+  if (saved.categorySortDir) out.categorySortDir = normalizeSortDir(saved.categorySortDir, 'desc');
+  if (saved.ungroupedSortDir) out.ungroupedSortDir = normalizeSortDir(saved.ungroupedSortDir, 'desc');
   return out;
 }
 
@@ -148,17 +157,22 @@ async function saveIndexedDbState(state) {
 }
 
 export async function loadPersistedState() {
+  let idbState = {};
   try {
-    const idbState = await loadIndexedDbState();
-    if (hasPersistedFields(idbState)) return idbState;
-
-    const localState = loadLocalStorageState();
-    if (hasPersistedFields(localState)) {
-      await saveIndexedDbState(localState);
-      return localState;
-    }
+    idbState = await loadIndexedDbState();
   } catch (err) {
-    return {};
+    /* IndexedDB unavailable or read failed; fall back to localStorage below. */
+  }
+  if (hasPersistedFields(idbState)) return idbState;
+
+  const localState = loadLocalStorageState();
+  if (hasPersistedFields(localState)) {
+    try {
+      await saveIndexedDbState(localState);
+    } catch (err) {
+      /* Best-effort migration to IndexedDB; keep the localStorage data either way. */
+    }
+    return localState;
   }
   return {};
 }
@@ -172,7 +186,10 @@ export function pickPersistedState(state) {
     rates: state.rates,
     numberFormat: state.numberFormat,
     listGrouping: state.listGrouping,
-    period: state.period
+    period: state.period,
+    dateSortDir: state.dateSortDir,
+    categorySortDir: state.categorySortDir,
+    ungroupedSortDir: state.ungroupedSortDir
   };
 }
 

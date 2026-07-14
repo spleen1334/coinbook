@@ -23,7 +23,7 @@ export function parseJsonImport(text, currentCategories, swatches, fallbackDate)
     id: 'imp' + importTick + '_' + i,
     amount: parseFloat(r.amount) || 0,
     date: r.date || fallbackDate,
-    categoryId: catByName[(r.category || '').trim().toLowerCase()] || catById[r.categoryId] || 'other',
+    categoryId: catByName.get((r.category || '').trim().toLowerCase()) || catById.get(r.categoryId) || 'other',
     note: r.note || ''
   }));
   return { categories, expenses };

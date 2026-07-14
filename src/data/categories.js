@@ -40,7 +40,8 @@ export const CATEGORY_DEFINITIONS = [
   { id: 'toiletry', name: 'Toiletry' },
   { id: 'transport', name: 'Transport' },
   { id: 'travel', name: 'Travel' },
-  { id: 'tea', name: 'Tea' }
+  { id: 'tea', name: 'Tea' },
+  { id: 'other', name: 'Other' }
 ];
 
 export const CATEGORY_SWATCHES = [

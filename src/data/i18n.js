@@ -49,7 +49,8 @@ export const CATEGORY_NAMES_BY_LANGUAGE = {
     toiletry: 'Toiletry',
     transport: 'Transport',
     travel: 'Travel',
-    tea: 'Tea'
+    tea: 'Tea',
+    other: 'Other'
   },
   sr: {
     bills: 'Рачуни',
@@ -93,7 +94,8 @@ export const CATEGORY_NAMES_BY_LANGUAGE = {
     toiletry: 'Хигијена',
     transport: 'Превоз',
     travel: 'Путовања',
-    tea: 'Чај'
+    tea: 'Чај',
+    other: 'Остало'
   },
   ru: {
     bills: 'Счета',
@@ -137,7 +139,8 @@ export const CATEGORY_NAMES_BY_LANGUAGE = {
     toiletry: 'Гигиена',
     transport: 'Транспорт',
     travel: 'Путешествия',
-    tea: 'Чай'
+    tea: 'Чай',
+    other: 'Другое'
   }
 };
 

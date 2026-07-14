@@ -1,5 +1,7 @@
 export function csvEscape(v) {
-  const s = String(v == null ? '' : v);
+  let s = String(v == null ? '' : v);
+  // Neutralize spreadsheet formula injection (Excel/Sheets execute cells starting with these chars).
+  if (/^[=+\-@\t\r]/.test(s)) s = "'" + s;
   return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
 }
 

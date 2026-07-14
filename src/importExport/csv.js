@@ -2,13 +2,13 @@ import { csvEscape, parseCsv } from '../utils/csv.js';
 import { mergeImportedCategories } from './categoryMerge.js';
 
 export function buildCsvExport(categories, expenses) {
-  const catById = {};
+  const catById = new Map();
   categories.forEach((c) => {
-    catById[c.id] = c;
+    catById.set(c.id, c);
   });
   const rows = [['date', 'category', 'amount', 'note']];
   expenses.forEach((e) => {
-    rows.push([e.date, (catById[e.categoryId] || { name: 'Other' }).name, e.amount.toFixed(2), e.note || '']);
+    rows.push([e.date, (catById.get(e.categoryId) || { name: 'Other' }).name, e.amount.toFixed(2), e.note || '']);
   });
   return rows.map((r) => r.map(csvEscape).join(',')).join('\n');
 }
@@ -39,7 +39,7 @@ export function parseCsvImport(text, currentCategories, swatches, fallbackDate) 
     id: 'imp' + importTick + '_' + i,
     amount: parseFloat(r[aIdx]) || 0,
     date: r[dIdx] || fallbackDate,
-    categoryId: catByName[(r[cIdx] || '').trim().toLowerCase()] || 'other',
+    categoryId: catByName.get((r[cIdx] || '').trim().toLowerCase()) || 'other',
     note: r[nIdx] || ''
   }));
   return { categories, expenses };

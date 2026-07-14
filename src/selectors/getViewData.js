@@ -240,7 +240,7 @@ export function buildViewData(app) {
   const lang = app.state.language;
   const cur = app.state.currency;
   const t = UI_TEXT[lang] || UI_TEXT.en;
-  const catById = {};
+  const catById = Object.create(null);
   app.state.categories.forEach((c) => {
     catById[c.id] = c;
   });
