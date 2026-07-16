@@ -21,7 +21,7 @@ export default defineConfig({
         name: 'Coin Book — Expense Ledger',
         short_name: 'Coin Book',
         description: 'A ledger-styled expense tracker with multi-currency support, charts, and CSV/JSON import-export.',
-        theme_color: '#ece0c4',
+        theme_color: '#f4ecd8',
         background_color: '#f4ecd8',
         display: 'standalone',
         orientation: 'portrait',
