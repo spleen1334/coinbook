@@ -10,10 +10,7 @@ export function SettingsScreen({
   decimalsOptions,
   decimalCharOptions,
   numberFormatPreview,
-  usdRate,
-  eurRate,
-  onRateChange,
-  onRateBlur,
+  rateOptions = [],
   canInstallApp,
   onInstallApp,
   onExportJson,
@@ -128,32 +125,28 @@ export function SettingsScreen({
 
       <div className="cb-section-label">{t.conversionRate}</div>
       <div className="cb-panel" style={{ marginBottom: 22 }}>
-        <div className="cb-rate-row">
-          <div className="cb-rate-label">{t.perRsd} USD</div>
-          <input
-            type="text"
-            inputMode="decimal"
-            step="0.0001"
-            min="0"
-            value={usdRate ?? ''}
-            onChange={(e) => onRateChange('USD', e)}
-            onBlur={() => onRateBlur('USD')}
-            className="cb-input"
-          />
-        </div>
-        <div className="cb-rate-row">
-          <div className="cb-rate-label">{t.perRsd} EUR</div>
-          <input
-            type="text"
-            inputMode="decimal"
-            step="0.0001"
-            min="0"
-            value={eurRate ?? ''}
-            onChange={(e) => onRateChange('EUR', e)}
-            onBlur={() => onRateBlur('EUR')}
-            className="cb-input"
-          />
-        </div>
+        {rateOptions.map((rate) => (
+          <div className="cb-rate-row" key={rate.code}>
+            <label className="cb-rate-label" htmlFor={`cb-rate-${rate.code}`}>
+              1 {rate.code} =
+            </label>
+            <div className="cb-rate-input-wrap">
+              <input
+                id={`cb-rate-${rate.code}`}
+                type="text"
+                inputMode="decimal"
+                step="0.0001"
+                min="0"
+                value={rate.value ?? ''}
+                onChange={rate.onChange}
+                onBlur={rate.onBlur}
+                className="cb-input"
+                aria-label={`RSD per ${rate.code}`}
+              />
+              <span className="cb-rate-unit">RSD</span>
+            </div>
+          </div>
+        ))}
       </div>
 
       {canInstallApp && (
@@ -167,23 +160,42 @@ export function SettingsScreen({
         </>
       )}
 
-      <div className="cb-section-label">{t.data}</div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 22 }}>
-        <div className="cb-btn-outline hover-lift" onClick={onExportJson}>
-          {t.exportJson}
+      <section className="cb-data-section" aria-labelledby="cb-data-heading">
+        <div id="cb-data-heading" className="cb-section-label">
+          {t.data}
         </div>
-        <div className="cb-btn-outline hover-lift" onClick={onExportCsv}>
-          {t.exportCsv}
+        <div className="cb-transfer-grid">
+          <div className="cb-transfer-card">
+            <div className="cb-transfer-heading">JSON</div>
+            <div className="cb-transfer-actions">
+              <div className="cb-btn-outline hover-lift" onClick={onExportJson}>
+                {t.exportJson}
+              </div>
+              <label className="cb-btn-outline cb-btn-dashed hover-lift">
+                {t.importJson}
+                <input
+                  type="file"
+                  accept="application/json,.json"
+                  onChange={onImportJsonFile}
+                  style={{ display: 'none' }}
+                />
+              </label>
+            </div>
+          </div>
+          <div className="cb-transfer-card">
+            <div className="cb-transfer-heading">CSV</div>
+            <div className="cb-transfer-actions">
+              <div className="cb-btn-outline hover-lift" onClick={onExportCsv}>
+                {t.exportCsv}
+              </div>
+              <label className="cb-btn-outline cb-btn-dashed hover-lift">
+                {t.importCsv}
+                <input type="file" accept="text/csv,.csv" onChange={onImportCsvFile} style={{ display: 'none' }} />
+              </label>
+            </div>
+          </div>
         </div>
-        <label className="cb-btn-outline cb-btn-dashed hover-lift">
-          {t.importJson}
-          <input type="file" accept="application/json,.json" onChange={onImportJsonFile} style={{ display: 'none' }} />
-        </label>
-        <label className="cb-btn-outline cb-btn-dashed hover-lift">
-          {t.importCsv}
-          <input type="file" accept="text/csv,.csv" onChange={onImportCsvFile} style={{ display: 'none' }} />
-        </label>
-      </div>
+      </section>
 
       <div className="cb-btn-solid hover-lift press-96" onClick={onDone} style={{ marginBottom: 12 }}>
         {t.done}

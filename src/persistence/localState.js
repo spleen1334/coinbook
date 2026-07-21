@@ -5,7 +5,8 @@ export const STORAGE_KEY = 'coinbook_v1_state';
 const DB_NAME = STORAGE_KEY;
 const DB_VERSION = 1;
 const STORE_NAME = 'snapshots';
-export const DEFAULT_RATES = { RSD: 1, EUR: 0.00852051, USD: 0.0097202 };
+export const DEFAULT_RATES = { RSD: 1, EUR: 1 / 117.36, USD: 1 / 102.73, RUB: 1 / 1.3, CNY: 1 / 15.17 };
+const LEGACY_DEFAULT_RATES = { EUR: 0.00852051, USD: 0.0097202 };
 
 function getLocalStorage() {
   try {
@@ -99,7 +100,7 @@ function toPositiveNumber(value) {
   return Number.isFinite(number) && number > 0 ? number : null;
 }
 
-function normalizeRates(rates) {
+export function normalizeRates(rates) {
   if (!rates || typeof rates !== 'object') return DEFAULT_RATES;
 
   const oldRsdPerUsd = toPositiveNumber(rates.RSD);
@@ -110,15 +111,24 @@ function normalizeRates(rates) {
     return {
       RSD: 1,
       EUR: oldEurPerUsd ? oldEurPerUsd / oldRsdPerUsd : DEFAULT_RATES.EUR,
-      USD: 1 / oldRsdPerUsd
+      USD: 1 / oldRsdPerUsd,
+      RUB: DEFAULT_RATES.RUB,
+      CNY: DEFAULT_RATES.CNY
     };
   }
 
-  return {
+  const normalized = {
     RSD: 1,
     EUR: toPositiveNumber(rates.EUR) || DEFAULT_RATES.EUR,
-    USD: toPositiveNumber(rates.USD) || DEFAULT_RATES.USD
+    USD: toPositiveNumber(rates.USD) || DEFAULT_RATES.USD,
+    RUB: toPositiveNumber(rates.RUB) || DEFAULT_RATES.RUB,
+    CNY: toPositiveNumber(rates.CNY) || DEFAULT_RATES.CNY
   };
+  // Replace only the exact defaults from the prior release. Custom rates are
+  // intentionally left untouched.
+  if (Math.abs(normalized.USD - LEGACY_DEFAULT_RATES.USD) < 1e-9) normalized.USD = DEFAULT_RATES.USD;
+  if (Math.abs(normalized.EUR - LEGACY_DEFAULT_RATES.EUR) < 1e-9) normalized.EUR = DEFAULT_RATES.EUR;
+  return normalized;
 }
 
 function loadLocalStorageState() {

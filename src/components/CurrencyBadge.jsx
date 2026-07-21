@@ -1,11 +1,13 @@
 const BADGE_TEXT = {
   USD: '$',
   EUR: '\u20ac',
-  RSD: 'RSD'
+  RSD: 'RSD',
+  RUB: '₽',
+  CNY: '¥'
 };
 
 export function CurrencyBadge({ currency, size = 'md', className = '' }) {
-  const code = currency === 'USD' || currency === 'EUR' || currency === 'RSD' ? currency : 'USD';
+  const code = BADGE_TEXT[currency] ? currency : 'USD';
   const text = BADGE_TEXT[code];
 
   return (

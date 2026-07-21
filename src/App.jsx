@@ -56,6 +56,7 @@ export default class App extends React.Component {
       language: 'en',
       currency: 'RSD',
       rates: DEFAULT_RATES,
+      rateInputs: {},
       numberFormat: { thousands: true, thousandsChar: ',', decimals: 2, decimalChar: '.' },
       listGrouping: 'date',
       dateSortDir: 'desc',
@@ -176,9 +177,19 @@ export default class App extends React.Component {
   async hydratePersistedState() {
     const persistedState = await loadPersistedState();
     if (!this._mounted) return;
-    const hydratedState = { ...this.state, ...persistedState, persistenceReady: true };
+    const hydratedRates = persistedState.rates || this.state.rates;
+    const rateInputs = Object.fromEntries(
+      ['USD', 'EUR', 'RUB', 'CNY'].map((code) => [code, (1 / hydratedRates[code]).toFixed(2)])
+    );
+    const hydratedState = {
+      ...this.state,
+      ...persistedState,
+      rates: hydratedRates,
+      rateInputs,
+      persistenceReady: true
+    };
     this._persistSnapshot = pickPersistedState(hydratedState);
-    this.setState({ ...persistedState, persistenceReady: true });
+    this.setState({ ...persistedState, rates: hydratedRates, rateInputs, persistenceReady: true });
   }
 
   isStandalone() {
@@ -335,16 +346,18 @@ export default class App extends React.Component {
   setRate = (code, e) => {
     const value = e.target.value;
     if (!/^\d*(?:[.,]\d*)?$/.test(value)) return;
-    this.setState((s) => ({ rates: { ...s.rates, [code]: value } }));
+    this.setState((s) => ({ rateInputs: { ...s.rateInputs, [code]: value } }));
   };
   finishRateEditing = (code) => {
     this.setState((s) => {
-      const parsedRate = Number(String(s.rates?.[code]).replace(',', '.'));
+      const parsedRate = Number(String(s.rateInputs?.[code] ?? '').replace(',', '.'));
+      const rsdPerUnit = Number.isFinite(parsedRate) && parsedRate > 0 ? parsedRate : 1 / DEFAULT_RATES[code];
       return {
         rates: {
           ...s.rates,
-          [code]: Number.isFinite(parsedRate) && parsedRate > 0 ? parsedRate : DEFAULT_RATES[code]
-        }
+          [code]: 1 / rsdPerUnit
+        },
+        rateInputs: { ...s.rateInputs, [code]: String(rsdPerUnit) }
       };
     });
   };
@@ -651,8 +664,9 @@ export default class App extends React.Component {
                   decimalsOptions={v.decimalsOptions}
                   decimalCharOptions={v.decimalCharOptions}
                   numberFormatPreview={v.numberFormatPreview}
-                  usdRate={s.rates.USD}
-                  eurRate={s.rates.EUR}
+                  usdRate={v.rateOptions.find((r) => r.code === 'USD')?.value}
+                  eurRate={v.rateOptions.find((r) => r.code === 'EUR')?.value}
+                  rateOptions={v.rateOptions}
                   onRateChange={this.setRate}
                   onRateBlur={this.finishRateEditing}
                   canInstallApp={s.canInstallApp}

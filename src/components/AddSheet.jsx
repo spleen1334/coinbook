@@ -178,7 +178,13 @@ export function AddSheet({
           <div className="cb-stamp-btn hover-stamp" onClick={onSubmit}>
             <svg className="cb-stamp-icon" width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">
               <path d="M4 3.5h10v4H4zM6 7.5h6v3H6z" fill="none" stroke="currentColor" strokeWidth="1.4" />
-              <path d="M3 10.5h12v3H3zM5 13.5h8" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+              <path
+                d="M3 10.5h12v3H3zM5 13.5h8"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.4"
+                strokeLinecap="round"
+              />
             </svg>
             <span>{isEditing ? t.saveChanges : t.stampItIn}</span>
           </div>

@@ -153,6 +153,20 @@ describe('normalizePersistedState', () => {
     const out = normalizePersistedState({ rates: 'garbage' });
     expect(out.rates).toEqual(DEFAULT_RATES);
   });
+
+  it('migrates only the known prior USD/EUR defaults', () => {
+    const out = normalizePersistedState({ rates: { USD: 0.0097202, EUR: 0.00852051, RUB: 0.75, CNY: 0.08 } });
+    expect(out.rates.USD).toBe(DEFAULT_RATES.USD);
+    expect(out.rates.EUR).toBe(DEFAULT_RATES.EUR);
+    expect(out.rates.RUB).toBe(0.75);
+    expect(out.rates.CNY).toBe(0.08);
+  });
+
+  it('preserves genuine custom USD/EUR rates during migration', () => {
+    const out = normalizePersistedState({ rates: { USD: 1 / 99.5, EUR: 1 / 121.25 } });
+    expect(out.rates.USD).toBe(1 / 99.5);
+    expect(out.rates.EUR).toBe(1 / 121.25);
+  });
 });
 
 describe('pickPersistedState', () => {

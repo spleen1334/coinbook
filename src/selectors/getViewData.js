@@ -310,7 +310,9 @@ export function buildViewData(app) {
     [
       { id: 'RSD', label: 'RSD' },
       { id: 'EUR', label: '€ EUR' },
-      { id: 'USD', label: '$ USD' }
+      { id: 'USD', label: '$ USD' },
+      { id: 'RUB', label: '₽ RUB' },
+      { id: 'CNY', label: '¥ CNY' }
     ],
     cur,
     (id) => () => app.setCurrency(id)
@@ -321,6 +323,15 @@ export function buildViewData(app) {
   const deleteCat = deleteEntry ? catById[deleteEntry.categoryId] || { id: 'other', name: 'Other' } : null;
 
   const settingsOptions = buildSettingsOptions(app, t);
+  const rateOptions = ['USD', 'EUR', 'RUB', 'CNY'].map((code) => ({
+    code,
+    value: Object.prototype.hasOwnProperty.call(app.state.rateInputs || {}, code)
+      ? app.state.rateInputs[code]
+      : (1 / app.state.rates[code]).toFixed(2),
+    rsdPerUnit: 1 / app.state.rates[code],
+    onChange: (e) => app.setRate(code, e),
+    onBlur: () => app.finishRateEditing(code)
+  }));
 
   return {
     lang,
@@ -346,6 +357,7 @@ export function buildViewData(app) {
     deleteEntry,
     deleteCat,
     ...settingsOptions,
+    rateOptions,
     contentAnim:
       app.state.lastAction === 'toHome'
         ? 'cbLedgerIn 0.55s cubic-bezier(.22,1,.36,1)'
