@@ -12,6 +12,8 @@ export function AddSheet({
   selectedCategoryLabel,
   categoryPickerOpen,
   onToggleCategoryPicker,
+  categoryPickerQuery,
+  onCategoryPickerQueryChange,
   categoriesForPicker,
   addingCategory,
   onStartNewCategory,
@@ -22,6 +24,8 @@ export function AddSheet({
   onCancelNewCategory,
   note,
   onNoteChange,
+  noteSuggestions,
+  onSelectNoteSuggestion,
   onClose,
   onSubmit
 }) {
@@ -77,25 +81,38 @@ export function AddSheet({
           </div>
 
           {categoryPickerOpen && (
-            <div className="cb-category-grid">
-              {categoriesForPicker.map((cat) => (
-                <div
-                  key={cat.id}
-                  className="cb-category-chip hover-lift"
-                  onClick={cat.select}
-                  style={{ background: cat.chipBg, color: cat.chipFg }}
-                >
-                  <div className="cb-coin-chip-face" style={{ background: cat.face }}>
-                    <div className="cb-coin-chip-rim" />
-                    <span className="cb-coin-chip-letter">{cat.initial}</span>
-                  </div>
-                  {cat.name}
-                </div>
-              ))}
-              <div className="cb-category-chip cb-category-chip-new hover-lift" onClick={onStartNewCategory}>
-                {t.newChip}
+            <>
+              <div className="cb-category-search-wrap">
+                <span aria-hidden="true">⌕</span>
+                <input
+                  type="search"
+                  value={categoryPickerQuery}
+                  onChange={onCategoryPickerQueryChange}
+                  placeholder="Search categories…"
+                  aria-label="Search categories"
+                  className="cb-category-search"
+                />
               </div>
-            </div>
+              <div className="cb-category-grid">
+                {categoriesForPicker.map((cat) => (
+                  <div
+                    key={cat.id}
+                    className="cb-category-chip hover-lift"
+                    onClick={cat.select}
+                    style={{ background: cat.chipBg, color: cat.chipFg }}
+                  >
+                    <div className="cb-coin-chip-face" style={{ background: cat.face }}>
+                      <div className="cb-coin-chip-rim" />
+                      <span className="cb-coin-chip-letter">{cat.initial}</span>
+                    </div>
+                    {cat.name}
+                  </div>
+                ))}
+                <div className="cb-category-chip cb-category-chip-new hover-lift" onClick={onStartNewCategory}>
+                  {t.newChip}
+                </div>
+              </div>
+            </>
           )}
 
           {addingCategory && (
@@ -130,13 +147,33 @@ export function AddSheet({
           )}
 
           <div className="cb-field-label">{t.memo}</div>
-          <input
-            type="text"
-            placeholder={t.memoPlaceholder}
-            value={note}
-            onChange={onNoteChange}
-            className="cb-input cb-input-memo"
-          />
+          <div className="cb-memo-wrap">
+            <input
+              type="text"
+              placeholder={t.memoPlaceholder}
+              value={note}
+              onChange={onNoteChange}
+              className="cb-input cb-input-memo"
+              aria-autocomplete="list"
+              aria-controls={noteSuggestions.length ? 'cb-note-suggestions' : undefined}
+            />
+            {noteSuggestions.length > 0 && (
+              <div id="cb-note-suggestions" className="cb-note-suggestions" role="listbox" aria-label="Previous notes">
+                {noteSuggestions.map((suggestion) => (
+                  <button
+                    type="button"
+                    role="option"
+                    aria-selected="false"
+                    key={suggestion}
+                    className="cb-note-suggestion"
+                    onClick={() => onSelectNoteSuggestion(suggestion)}
+                  >
+                    {suggestion}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
 
           <div className="cb-stamp-btn hover-stamp" onClick={onSubmit}>
             {isEditing ? t.saveChanges : t.stampItIn}

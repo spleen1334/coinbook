@@ -78,6 +78,8 @@ export default class App extends React.Component {
       deleteAllOpen: false,
       deleteAllText: '',
       categoryPickerOpen: false,
+      categoryPickerQuery: '',
+      noteSuggestionsOpen: false,
       toastMsg: null,
       toastVariant: 'success',
       showSplash: true,
@@ -413,15 +415,17 @@ export default class App extends React.Component {
       sheetClosing: false,
       editingId: null,
       addAmount: '',
-      addDate: isoOf(today()),
+      addDate: this.state.period === 'day' ? this.getRange()[0] : isoOf(today()),
       addCategoryId: 'food',
       addNote: '',
       addingCategory: false,
-      categoryPickerOpen: false
+      categoryPickerOpen: false,
+      categoryPickerQuery: '',
+      noteSuggestionsOpen: false
     });
   requestCloseAdd = () => {
     if (this.state.sheetClosing) return;
-    this.setState({ sheetClosing: true });
+    this.setState({ sheetClosing: true, categoryPickerQuery: '', noteSuggestionsOpen: false });
     if (this._sheetCloseTimer) clearTimeout(this._sheetCloseTimer);
     this._sheetCloseTimer = setTimeout(() => {
       this.setState({
@@ -429,7 +433,9 @@ export default class App extends React.Component {
         sheetClosing: false,
         addingCategory: false,
         editingId: null,
-        categoryPickerOpen: false
+        categoryPickerOpen: false,
+        categoryPickerQuery: '',
+        noteSuggestionsOpen: false
       });
     }, 220);
   };
@@ -439,15 +445,23 @@ export default class App extends React.Component {
       editingId: entry.id,
       addingCategory: false,
       categoryPickerOpen: false,
+      categoryPickerQuery: '',
+      noteSuggestionsOpen: false,
       addAmount: String(entry.amount),
       addDate: entry.date,
       addCategoryId: entry.categoryId,
       addNote: entry.note || ''
     });
-  toggleCategoryPicker = () => this.setState((s) => ({ categoryPickerOpen: !s.categoryPickerOpen }));
+  toggleCategoryPicker = () =>
+    this.setState((s) => ({
+      categoryPickerOpen: !s.categoryPickerOpen,
+      categoryPickerQuery: s.categoryPickerOpen ? '' : s.categoryPickerQuery
+    }));
+  onCategoryPickerQueryInput = (e) => this.setState({ categoryPickerQuery: e.target.value });
   onAmountInput = (e) => this.setState({ addAmount: e.target.value });
   onDateInput = (e) => this.setState({ addDate: e.target.value });
-  onNoteInput = (e) => this.setState({ addNote: e.target.value });
+  onNoteInput = (e) => this.setState({ addNote: e.target.value, noteSuggestionsOpen: !!e.target.value.trim() });
+  selectNoteSuggestion = (note) => this.setState({ addNote: note, noteSuggestionsOpen: false });
   onNewCatNameInput = (e) => this.setState({ newCatName: e.target.value });
   startNewCategory = () => this.setState({ addingCategory: true, newCatName: '', newCatColor: 0 });
   cancelNewCategory = () => this.setState({ addingCategory: false });
@@ -458,7 +472,7 @@ export default class App extends React.Component {
     const nameKey = name.toLowerCase();
     const existing = this.state.categories.find((c) => c.name.toLowerCase() === nameKey);
     if (existing) {
-      this.setState({ addCategoryId: existing.id, addingCategory: false, newCatName: '' });
+      this.setState({ addCategoryId: existing.id, addingCategory: false, newCatName: '', categoryPickerQuery: '' });
       this.showToast(UI_TEXT[this.state.language]?.categoryExistsToast || 'Category already exists');
       return;
     }
@@ -468,7 +482,8 @@ export default class App extends React.Component {
       categories: [...s.categories, { id, name, color }],
       addCategoryId: id,
       addingCategory: false,
-      newCatName: ''
+      newCatName: '',
+      categoryPickerQuery: ''
     }));
   };
 
@@ -585,6 +600,31 @@ export default class App extends React.Component {
 
     const v = this.getViewData();
     const t = v.t;
+    const categoryQuery = (s.categoryPickerQuery || '').trim().toLowerCase();
+    const categoriesForPicker = v.categoriesForPicker
+      .filter((cat) => fuzzyMatch(categoryQuery, cat.name.toLowerCase()))
+      .map((cat) => ({
+        ...cat,
+        select: () => {
+          cat.select();
+          this.setState({ categoryPickerQuery: '' });
+        }
+      }));
+    const noteSuggestions = (() => {
+      if (!s.noteSuggestionsOpen || !s.addNote.trim()) return [];
+      const seen = new Set();
+      return s.expenses
+        .map((expense, index) => ({ expense, index, note: (expense.note || '').trim() }))
+        .filter(({ note }) => note && fuzzyMatch(s.addNote.trim().toLowerCase(), note.toLowerCase()))
+        .sort((a, b) => b.expense.date.localeCompare(a.expense.date) || a.index - b.index)
+        .filter(({ note }) => {
+          const key = note.toLowerCase();
+          if (seen.has(key)) return false;
+          seen.add(key);
+          return true;
+        })
+        .map(({ note }) => note);
+    })();
     const isSettings = s.screen === 'settings';
     const isHome = s.screen === 'home';
     const isGraph = s.screen === 'graph';
@@ -654,7 +694,9 @@ export default class App extends React.Component {
               selectedCategoryLabel={v.selectedCatLabel}
               categoryPickerOpen={s.categoryPickerOpen}
               onToggleCategoryPicker={this.toggleCategoryPicker}
-              categoriesForPicker={v.categoriesForPicker}
+              categoryPickerQuery={s.categoryPickerQuery}
+              onCategoryPickerQueryChange={this.onCategoryPickerQueryInput}
+              categoriesForPicker={categoriesForPicker}
               addingCategory={s.addingCategory}
               onStartNewCategory={this.startNewCategory}
               newCatName={s.newCatName}
@@ -664,6 +706,8 @@ export default class App extends React.Component {
               onCancelNewCategory={this.cancelNewCategory}
               note={s.addNote}
               onNoteChange={this.onNoteInput}
+              noteSuggestions={noteSuggestions}
+              onSelectNoteSuggestion={this.selectNoteSuggestion}
               onClose={this.requestCloseAdd}
               onSubmit={this.submitAdd}
             />
