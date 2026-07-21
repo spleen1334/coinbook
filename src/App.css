@@ -249,6 +249,22 @@ a:hover {
     transform: scale(1) translateY(0);
   }
 }
+@keyframes cbFabAttention {
+  0%,
+  82%,
+  100% {
+    transform: rotate(0deg) translateX(0);
+  }
+  86% {
+    transform: rotate(-4deg) translateX(-1px);
+  }
+  90% {
+    transform: rotate(3deg) translateX(1px);
+  }
+  94% {
+    transform: rotate(-1.5deg) translateX(0);
+  }
+}
 @keyframes cbSplashIcon {
   0% {
     opacity: 0;
@@ -1318,6 +1334,20 @@ a:hover {
   border: 3px solid #f4ecd8;
   transition: transform 0.15s ease;
 }
+.cb-fab-icon {
+  display: block;
+  width: 50px;
+  height: 50px;
+  object-fit: contain;
+  pointer-events: none;
+  user-select: none;
+  animation: cbFabAttention 6s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .cb-fab-icon {
+    animation: none;
+  }
+}
 
 /* ---- toast ---- */
 .cb-toast {
@@ -1913,6 +1943,10 @@ a:hover {
   transition: transform 0.15s ease;
 }
 .cb-stamp-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
   text-align: center;
   padding: 14px 0;
   font-family: 'Special Elite', monospace;
@@ -1924,4 +1958,7 @@ a:hover {
   cursor: pointer;
   box-shadow: 0 3px 0 #7a2a1c;
   transition: transform 0.15s ease;
+}
+.cb-stamp-icon {
+  flex: none;
 }

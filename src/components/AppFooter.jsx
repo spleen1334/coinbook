@@ -24,8 +24,19 @@ export function AppFooter({ app, s, t }) {
         </div>
         <div className="cb-nav-label">{t.navLedger}</div>
       </div>
-      <div className="cb-fab hover-fab press-fab" onClick={app.openAdd}>
-        +
+      <div
+        className="cb-fab hover-fab press-fab"
+        onClick={app.openAdd}
+        aria-label="Add expense"
+        title="Add expense"
+      >
+        <img
+          className="cb-fab-icon"
+          src={`${import.meta.env.BASE_URL}icons/add-expense.png`}
+          alt=""
+          aria-hidden="true"
+          draggable="false"
+        />
       </div>
       <div
         className="cb-nav-btn hover-nav press-96"
