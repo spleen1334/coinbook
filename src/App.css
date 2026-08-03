@@ -1702,6 +1702,9 @@ a:hover {
   font-size: 11px;
 }
 .cb-btn-outline {
+  appearance: none;
+  background: transparent;
+  font-family: inherit;
   text-align: center;
   padding: 11px 0;
   font-size: 13px;
@@ -1719,6 +1722,7 @@ a:hover {
   box-shadow: none;
 }
 .cb-btn-solid {
+  appearance: none;
   text-align: center;
   padding: 13px 0;
   font-family: 'Special Elite', monospace;
@@ -1863,20 +1867,68 @@ a:hover {
   position: absolute;
   left: 0;
   right: 0;
-  bottom: 0;
-  max-height: 82%;
+  bottom: var(--cb-visual-viewport-bottom, 0px);
+  height: min(82%, 680px);
+  max-height: min(calc(100% - 10px), var(--cb-visual-viewport-height, 100%));
   background: #f4ecd8;
   border-top: 3px solid #2c2416;
   border-radius: 18px 18px 0 0;
   z-index: 51;
   overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
   box-shadow: 0 -8px 30px rgba(0, 0, 0, 0.3);
+}
+.cb-sheet-expanded {
+  height: min(94%, 780px);
+}
+.cb-sheet-handle-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  width: 100%;
+  min-height: 30px;
+  padding: 8px 0 2px;
+  border: 0;
+  background: transparent;
+  color: #8a7355;
+  font:
+    9px 'Courier Prime',
+    monospace;
+  letter-spacing: 0.7px;
+  cursor: pointer;
 }
 .cb-sheet-handle {
   width: 40px;
   height: 5px;
   border-radius: 3px;
   background: #c9b98f;
+}
+.cb-sheet-handle-label {
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+.cb-sheet-handle-btn:hover .cb-sheet-handle-label,
+.cb-sheet-handle-btn:focus-visible .cb-sheet-handle-label {
+  opacity: 1;
+}
+.cb-sheet-form {
+  min-height: 100%;
+}
+.cb-sheet-body {
+  padding: 12px 20px 18px;
+}
+.cb-sheet-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+.cb-sheet-title {
+  font-family: 'Special Elite', monospace;
+  font-size: 19px;
 }
 .cb-field-label {
   font-size: 10px;
@@ -1885,6 +1937,8 @@ a:hover {
   margin-bottom: 4px;
 }
 .cb-category-select {
+  appearance: none;
+  width: 100%;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -1963,6 +2017,7 @@ a:hover {
   color: #a8987a;
 }
 .cb-category-chip {
+  appearance: none;
   display: flex;
   align-items: center;
   gap: 6px;
@@ -1970,8 +2025,10 @@ a:hover {
   border-radius: 16px;
   border: 1.5px solid #2c2416;
   cursor: pointer;
+  font-family: inherit;
   font-size: 12px;
   font-weight: 700;
+  text-align: left;
   transition: transform 0.15s ease;
 }
 .cb-category-chip-new {
@@ -2013,6 +2070,7 @@ a:hover {
   animation: cbFadeSlide 0.2s ease-out;
 }
 .cb-swatch {
+  appearance: none;
   width: 22px;
   height: 22px;
   border-radius: 50%;
@@ -2036,6 +2094,33 @@ a:hover {
   box-shadow: 0 3px 0 #7a2a1c;
   transition: transform 0.15s ease;
 }
+.cb-sheet-actions {
+  position: sticky;
+  bottom: 0;
+  padding: 10px 20px calc(10px + env(safe-area-inset-bottom));
+  background: linear-gradient(to bottom, rgba(244, 236, 216, 0), #f4ecd8 14px);
+}
 .cb-stamp-icon {
   flex: none;
+}
+
+@media (max-width: 600px), (max-height: 700px) {
+  .cb-sheet {
+    height: min(92dvh, 760px);
+    max-height: min(calc(100dvh - 8px), var(--cb-visual-viewport-height, 100%));
+  }
+  .cb-sheet-expanded {
+    height: calc(100dvh - 8px);
+    max-height: min(calc(100dvh - 8px), var(--cb-visual-viewport-height, 100%));
+  }
+  .cb-sheet-body {
+    padding-bottom: 12px;
+  }
+  .cb-sheet-handle-btn {
+    min-height: 36px;
+    padding-top: 10px;
+  }
+  .cb-sheet-handle-label {
+    opacity: 0.72;
+  }
 }
