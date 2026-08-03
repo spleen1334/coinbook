@@ -700,6 +700,7 @@ export default class App extends React.Component {
               t={t}
               isEditing={!!s.editingId}
               isClosing={s.sheetClosing}
+              currency={s.currency}
               amount={s.addAmount}
               onAmountChange={this.onAmountInput}
               date={s.addDate}

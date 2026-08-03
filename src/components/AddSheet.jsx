@@ -5,6 +5,7 @@ export function AddSheet({
   t,
   isEditing,
   isClosing,
+  currency,
   amount,
   onAmountChange,
   date,
@@ -30,6 +31,7 @@ export function AddSheet({
   onClose,
   onSubmit
 }) {
+  const currencyMark = { USD: '$', EUR: '€', RSD: 'RSD', RUB: '₽', CNY: '¥' }[currency] || currency;
   const [isExpanded, setIsExpanded] = useState(false);
   const [viewportMetrics, setViewportMetrics] = useState(null);
   const sheetRef = useRef(null);
@@ -80,6 +82,9 @@ export function AddSheet({
   const preventExpenseSubmit = (event) => {
     if (event.key === 'Enter') event.preventDefault();
   };
+  const sheetClassName = `cb-sheet${viewportMetrics ? ' cb-sheet-viewport' : ''}${
+    isExpanded ? ' cb-sheet-expanded' : ''
+  }`;
 
   return (
     <>
@@ -90,24 +95,30 @@ export function AddSheet({
       />
       <div
         ref={sheetRef}
-        className={`cb-sheet${isExpanded ? ' cb-sheet-expanded' : ''}`}
+        className={sheetClassName}
         style={{
           animation: isClosing ? 'cbSheetDown 0.22s ease-in forwards' : 'cbSheetUp 0.22s ease-out',
           '--cb-visual-viewport-height': viewportMetrics ? `${viewportMetrics.height}px` : undefined,
           '--cb-visual-viewport-bottom': viewportMetrics ? `${viewportMetrics.bottomOffset}px` : undefined
         }}
       >
-        <button
-          type="button"
-          className="cb-sheet-handle-btn"
-          onClick={() => setIsExpanded((expanded) => !expanded)}
-          aria-expanded={isExpanded}
-          aria-label={isExpanded ? t.collapseSheet : t.expandSheet}
-          title={isExpanded ? t.collapseSheet : t.expandSheet}
-        >
-          <span className="cb-sheet-handle" />
-          <span className="cb-sheet-handle-label">{isExpanded ? t.collapseSheet : t.expandSheet}</span>
-        </button>
+        {viewportMetrics ? (
+          <button
+            type="button"
+            className="cb-sheet-handle-btn"
+            onClick={() => setIsExpanded((expanded) => !expanded)}
+            aria-expanded={isExpanded}
+            aria-label={isExpanded ? t.collapseSheet : t.expandSheet}
+            title={isExpanded ? t.collapseSheet : t.expandSheet}
+          >
+            <span className="cb-sheet-handle" />
+            <span className="cb-sheet-handle-label">{isExpanded ? t.collapseSheet : t.expandSheet}</span>
+          </button>
+        ) : (
+          <div className="cb-sheet-handle-btn" aria-hidden="true">
+            <span className="cb-sheet-handle" />
+          </div>
+        )}
         <form
           className="cb-sheet-form"
           noValidate
@@ -125,21 +136,26 @@ export function AddSheet({
             </div>
 
             <div className="cb-field-label">{t.amount}</div>
-            <input
-              ref={amountRef}
-              type="number"
-              name="amount"
-              inputMode="decimal"
-              enterKeyHint="next"
-              step="0.01"
-              min="0"
-              placeholder="0.00"
-              value={amount}
-              onChange={onAmountChange}
-              onFocus={keepFocusedFieldVisible}
-              onKeyDown={(event) => focusNext(event, dateRef)}
-              className="cb-input cb-input-amount"
-            />
+            <div className="cb-amount-input-wrap">
+              <input
+                ref={amountRef}
+                type="number"
+                name="amount"
+                inputMode="decimal"
+                enterKeyHint="next"
+                step="0.01"
+                min="0"
+                placeholder="0.00"
+                value={amount}
+                onChange={onAmountChange}
+                onFocus={keepFocusedFieldVisible}
+                onKeyDown={(event) => focusNext(event, dateRef)}
+                className="cb-input cb-input-amount"
+              />
+              <span className="cb-amount-currency" aria-label={currency} role="img" title={currency}>
+                {currencyMark}
+              </span>
+            </div>
 
             <div className="cb-field-label">{t.date}</div>
             <input
@@ -282,16 +298,13 @@ export function AddSheet({
 
           <div className="cb-sheet-actions">
             <button type="submit" className="cb-stamp-btn hover-stamp">
-              <svg className="cb-stamp-icon" width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">
-                <path d="M4 3.5h10v4H4zM6 7.5h6v3H6z" fill="none" stroke="currentColor" strokeWidth="1.4" />
-                <path
-                  d="M3 10.5h12v3H3zM5 13.5h8"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.4"
-                  strokeLinecap="round"
-                />
-              </svg>
+              <img
+                className="cb-stamp-icon"
+                src={`${import.meta.env.BASE_URL}icons/stamp-expense.png`}
+                alt=""
+                aria-hidden="true"
+                draggable="false"
+              />
               <span>{isEditing ? t.saveChanges : t.stampItIn}</span>
             </button>
           </div>
