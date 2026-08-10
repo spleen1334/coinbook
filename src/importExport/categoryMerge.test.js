@@ -85,4 +85,21 @@ describe('mergeImportedCategories', () => {
     mergeImportedCategories(current, [{ name: '__proto__' }]);
     expect({}.polluted).toBeUndefined();
   });
+
+  it('keeps favorite: true on a newly imported category', () => {
+    const { categories } = mergeImportedCategories(current, [{ name: 'Travel', favorite: true }]);
+    expect(categories.find((c) => c.name === 'Travel').favorite).toBe(true);
+  });
+
+  it('defaults a newly imported category to favorite: false when absent', () => {
+    const { categories } = mergeImportedCategories(current, [{ name: 'Travel' }]);
+    expect(categories.find((c) => c.name === 'Travel').favorite).toBe(false);
+  });
+
+  it('does not overwrite an existing local category favorite flag on a name collision', () => {
+    const localFavorite = [{ id: 'food', name: 'Food', color: '#8a5a3b', favorite: true }];
+    const { categories } = mergeImportedCategories(localFavorite, [{ name: 'food', favorite: false }]);
+    expect(categories).toHaveLength(1);
+    expect(categories[0].favorite).toBe(true);
+  });
 });

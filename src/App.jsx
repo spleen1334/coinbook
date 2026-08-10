@@ -1,5 +1,5 @@
 import React from 'react';
-import { CATEGORY_DEFINITIONS, CATEGORY_SWATCHES } from './data/categories.js';
+import { CATEGORY_DEFINITIONS } from './data/categories.js';
 import { DEMO_EXPENSES } from './data/demoExpenses.js';
 import { MONTHS, MONTHS_BY_LANGUAGE, CATEGORY_NAMES_BY_LANGUAGE, UI_TEXT } from './data/i18n.js';
 import { LedgerScreen } from './components/LedgerScreen.jsx';
@@ -46,6 +46,10 @@ function buildSeedExpenses() {
   });
 }
 
+function buildSeedCategories() {
+  return CATEGORY_DEFINITIONS.map((c) => ({ id: c.id, name: c.name, color: hashCatColor(c.name), favorite: false }));
+}
+
 export default class App extends React.Component {
   constructor(props) {
     super(props);
@@ -75,7 +79,6 @@ export default class App extends React.Component {
       addNote: '',
       addingCategory: false,
       newCatName: '',
-      newCatColor: 0,
       deleteAllOpen: false,
       deleteAllText: '',
       categoryPickerOpen: false,
@@ -95,7 +98,7 @@ export default class App extends React.Component {
       sheetClosing: false,
       canInstallApp: false,
       persistenceReady: false,
-      categories: CATEGORY_DEFINITIONS.map((c) => ({ id: c.id, name: c.name, color: hashCatColor(c.name) })),
+      categories: buildSeedCategories(),
       expenses: buildSeedExpenses()
     };
     this._totalAnimator = createTotalAnimator({
@@ -476,7 +479,7 @@ export default class App extends React.Component {
   onNoteInput = (e) => this.setState({ addNote: e.target.value, noteSuggestionsOpen: !!e.target.value.trim() });
   selectNoteSuggestion = (note) => this.setState({ addNote: note, noteSuggestionsOpen: false });
   onNewCatNameInput = (e) => this.setState({ newCatName: e.target.value });
-  startNewCategory = () => this.setState({ addingCategory: true, newCatName: '', newCatColor: 0 });
+  startNewCategory = () => this.setState({ addingCategory: true, newCatName: '' });
   cancelNewCategory = () => this.setState({ addingCategory: false });
 
   confirmNewCategory = () => {
@@ -489,16 +492,21 @@ export default class App extends React.Component {
       this.showToast(UI_TEXT[this.state.language]?.categoryExistsToast || 'Category already exists');
       return;
     }
-    const color = CATEGORY_SWATCHES[this.state.newCatColor % CATEGORY_SWATCHES.length];
+    const color = hashCatColor(name);
     const id = 'custom_' + Date.now();
     this.setState((s) => ({
-      categories: [...s.categories, { id, name, color }],
+      categories: [...s.categories, { id, name, color, favorite: false }],
       addCategoryId: id,
       addingCategory: false,
       newCatName: '',
       categoryPickerQuery: ''
     }));
   };
+
+  toggleCategoryFavorite = (id) =>
+    this.setState((s) => ({
+      categories: s.categories.map((c) => (c.id === id ? { ...c, favorite: !c.favorite } : c))
+    }));
 
   submitAdd = () => {
     const amt = parseFloat(this.state.addAmount);
@@ -585,7 +593,7 @@ export default class App extends React.Component {
     this.requestExpenseTotalReplay();
     this.setState({
       expenses: [],
-      categories: CATEGORY_DEFINITIONS.map((c) => ({ id: c.id, name: c.name, color: hashCatColor(c.name) })),
+      categories: buildSeedCategories(),
       deleteAllOpen: false,
       deleteAllText: '',
       screen: 'settings'
@@ -716,7 +724,6 @@ export default class App extends React.Component {
               onStartNewCategory={this.startNewCategory}
               newCatName={s.newCatName}
               onNewCatNameChange={this.onNewCatNameInput}
-              swatches={v.swatches}
               onConfirmNewCategory={this.confirmNewCategory}
               onCancelNewCategory={this.cancelNewCategory}
               note={s.addNote}

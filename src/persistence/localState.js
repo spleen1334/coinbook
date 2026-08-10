@@ -46,7 +46,12 @@ function normalizeCategoryRecords(raw) {
     // auto-coloring, or the poisoned fallback — is (re)derived from the name, so
     // previously auto-colored (or corrupted) categories self-heal on load.
     const hex = isHexColor(c.color) ? c.color.trim() : null;
-    result.push({ id, name, color: hex && hex !== POISONED_FALLBACK_COLOR ? hex : hashCatColor(name) });
+    result.push({
+      id,
+      name,
+      color: hex && hex !== POISONED_FALLBACK_COLOR ? hex : hashCatColor(name),
+      favorite: c.favorite === true
+    });
   });
   return result;
 }

@@ -42,7 +42,8 @@ export function mergeImportedCategories(currentCategories, importedCategories) {
     categories.push({
       id,
       name,
-      color: normalizeColor(c.color, hashCatColor(name))
+      color: normalizeColor(c.color, hashCatColor(name)),
+      favorite: c.favorite === true
     });
   });
 

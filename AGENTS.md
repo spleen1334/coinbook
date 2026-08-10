@@ -8,7 +8,7 @@
 - Build/preview: `npm run build`, `npm run preview`.
 - GitHub Pages project build/deploy: `npm run build:pages`, `npm run deploy`.
 - Quality: `npm run lint`, `npm run lint:fix`, `npm run format`, `npm run format:check`, `npm run check`.
-- No automated tests currently exist.
+- Tests: Vitest, colocated `*.test.js` files; run with `npm test`.
 
 ## Project structure
 
@@ -29,6 +29,7 @@
 - CSV columns are `date,category,amount,note`.
 - Imported expenses are prepended to existing expenses; imported categories are merged by name.
 - Category ids, currency/rate handling, language keys, and number-format settings are user data compatibility points.
+- Categories carry a `favorite` boolean. JSON export/import preserves it; CSV does not (CSV has no favorite column, so categories created via CSV import are always non-favorite, and importing never clears an existing category's favorite flag).
 
 ## PWA and base-path caveats
 
@@ -49,4 +50,4 @@
 
 - For documentation-only changes, no build is required unless requested.
 - For code changes, run relevant checks; `npm run check` is the broad validation command.
-- Do not claim tests pass: this repo currently has no test suite.
+- Run `npm test` and confirm it passes before claiming a change is validated.

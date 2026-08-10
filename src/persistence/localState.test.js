@@ -14,8 +14,33 @@ describe('normalizePersistedState', () => {
       categories: [{ id: 'food', name: 'Food', color: '#8a5a3b' }],
       expenses: [{ id: 'e1', amount: 4.5, date: '2026-07-01', categoryId: 'food', note: 'Coffee' }]
     });
-    expect(out.categories).toEqual([{ id: 'food', name: 'Food', color: '#8a5a3b' }]);
+    expect(out.categories).toEqual([{ id: 'food', name: 'Food', color: '#8a5a3b', favorite: false }]);
     expect(out.expenses).toEqual([{ id: 'e1', amount: 4.5, date: '2026-07-01', categoryId: 'food', note: 'Coffee' }]);
+  });
+
+  it('defaults favorite to false when the key is absent (old-snapshot upgrade)', () => {
+    const out = normalizePersistedState({
+      categories: [{ id: 'food', name: 'Food', color: '#8a5a3b' }]
+    });
+    expect(out.categories[0].favorite).toBe(false);
+  });
+
+  it('preserves favorite: true', () => {
+    const out = normalizePersistedState({
+      categories: [{ id: 'food', name: 'Food', color: '#8a5a3b', favorite: true }]
+    });
+    expect(out.categories[0].favorite).toBe(true);
+  });
+
+  it('coerces a non-boolean favorite value to false', () => {
+    const out = normalizePersistedState({
+      categories: [
+        { id: 'a', name: 'A', favorite: 'yes' },
+        { id: 'b', name: 'B', favorite: 1 },
+        { id: 'c', name: 'C', favorite: {} }
+      ]
+    });
+    expect(out.categories.map((c) => c.favorite)).toEqual([false, false, false]);
   });
 
   it('drops expense records with an invalid date instead of crashing', () => {
@@ -173,7 +198,7 @@ describe('pickPersistedState', () => {
   it('selects only the persisted fields', () => {
     const state = {
       expenses: [],
-      categories: [],
+      categories: [{ id: 'food', name: 'Food', color: '#8a5a3b', favorite: true }],
       language: 'en',
       currency: 'RSD',
       rates: DEFAULT_RATES,
@@ -190,7 +215,7 @@ describe('pickPersistedState', () => {
     expect(pickPersistedState(state)).not.toHaveProperty('searchQuery');
     expect(pickPersistedState(state)).toEqual({
       expenses: [],
-      categories: [],
+      categories: [{ id: 'food', name: 'Food', color: '#8a5a3b', favorite: true }],
       language: 'en',
       currency: 'RSD',
       rates: DEFAULT_RATES,
