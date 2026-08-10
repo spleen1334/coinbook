@@ -1,5 +1,4 @@
 import { UI_TEXT, MONTHS_BY_LANGUAGE, MONTHS } from '../data/i18n.js';
-import { CATEGORY_SWATCHES } from '../data/categories.js';
 import { formatShortDate } from '../utils/date.js';
 import { formatNumber } from '../utils/money.js';
 import { coinFace } from '../utils/coin.js';
@@ -175,7 +174,11 @@ function buildPieSegments(app, filtered, catById, cur) {
 }
 
 function buildCategoryPicker(app, catById) {
-  const categoriesForPicker = app.state.categories.map((c) => {
+  const orderedCategories = app.state.categories
+    .map((c, i) => ({ c, i }))
+    .sort((a, b) => (b.c.favorite === true) - (a.c.favorite === true) || a.i - b.i)
+    .map(({ c }) => c);
+  const categoriesForPicker = orderedCategories.map((c) => {
     const selected = app.state.addCategoryId === c.id;
     const label = app.catLabel(c);
     return {
@@ -185,17 +188,17 @@ function buildCategoryPicker(app, catById) {
       face: coinFace(c.color),
       select: () => app.setState({ addCategoryId: c.id, categoryPickerOpen: false }),
       chipBg: selected ? INK : 'transparent',
-      chipFg: selected ? PAPER_FG : INK
+      chipFg: selected ? PAPER_FG : INK,
+      favorite: c.favorite === true,
+      toggleFavorite: (e) => {
+        if (e && e.stopPropagation) e.stopPropagation();
+        app.toggleCategoryFavorite(c.id);
+      }
     };
   });
   const selectedCatObj = catById[app.state.addCategoryId] || { id: 'unsure', name: "I don't know", color: '#888' };
   const selectedCatLabel = app.catLabel(selectedCatObj);
-  const swatches = CATEGORY_SWATCHES.map((hex, i) => ({
-    hex,
-    select: () => app.setState({ newCatColor: i }),
-    border: app.state.newCatColor === i ? '3px solid ' + INK : '1px solid rgba(0,0,0,0.2)'
-  }));
-  return { categoriesForPicker, selectedCatObj, selectedCatLabel, swatches };
+  return { categoriesForPicker, selectedCatObj, selectedCatLabel };
 }
 
 function buildSettingsOptions(app, t) {
@@ -294,7 +297,7 @@ export function buildViewData(app) {
     { activeBorderWidth: 2, activeShadowWidth: 2, includeScale: false }
   );
 
-  const { categoriesForPicker, selectedCatObj, selectedCatLabel, swatches } = buildCategoryPicker(app, catById);
+  const { categoriesForPicker, selectedCatObj, selectedCatLabel } = buildCategoryPicker(app, catById);
 
   const languageOptions = buildPillToggle(
     [
@@ -351,7 +354,6 @@ export function buildViewData(app) {
     categoriesForPicker,
     selectedCatObj,
     selectedCatLabel,
-    swatches,
     languageOptions,
     currencyOptions,
     deleteEntry,

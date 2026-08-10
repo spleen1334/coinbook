@@ -80,4 +80,11 @@ describe('parseJsonImport', () => {
     const { categories: merged } = parseJsonImport(text, categories, '2026-01-01');
     expect(merged.find((c) => c.name === 'Sketchy').color).toBe(hashCatColor('Sketchy'));
   });
+
+  it('preserves favorite through an export/import round trip', () => {
+    const favCategories = [{ id: 'food', name: 'Food', color: '#8a5a3b', favorite: true }];
+    const json = buildJsonExport(favCategories, []);
+    const { categories: merged } = parseJsonImport(json, [], '2026-01-01');
+    expect(merged.find((c) => c.name === 'Food').favorite).toBe(true);
+  });
 });

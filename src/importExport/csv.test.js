@@ -68,4 +68,12 @@ describe('parseCsvImport', () => {
     const { expenses } = parseCsvImport(text, categories, '2026-01-01');
     expect(expenses[0].categoryId).toBe('other');
   });
+
+  it('leaves an existing favorited category untouched and adds new categories as non-favorite', () => {
+    const favCategories = [{ id: 'food', name: 'Food', color: '#8a5a3b', favorite: true }];
+    const text = `${header}\n2026-07-01,Food,10,note\n2026-07-02,Travel,5,note`;
+    const { categories: merged } = parseCsvImport(text, favCategories, '2026-01-01');
+    expect(merged.find((c) => c.name === 'Food').favorite).toBe(true);
+    expect(merged.find((c) => c.name === 'Travel').favorite).toBe(false);
+  });
 });

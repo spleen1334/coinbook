@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState } from 'react';
-import { coinFace } from '../utils/coin.js';
+import { Fragment, useEffect, useRef, useState } from 'react';
+import { coinFace, hashCatColor } from '../utils/coin.js';
 
 export function AddSheet({
   t,
@@ -21,7 +21,6 @@ export function AddSheet({
   onStartNewCategory,
   newCatName,
   onNewCatNameChange,
-  swatches,
   onConfirmNewCategory,
   onCancelNewCategory,
   note,
@@ -32,6 +31,9 @@ export function AddSheet({
   onSubmit
 }) {
   const currencyMark = { USD: '$', EUR: '€', RSD: 'RSD', RUB: '₽', CNY: '¥' }[currency] || currency;
+  const trimmedNewCatName = (newCatName || '').trim();
+  const newCatPreviewColor = trimmedNewCatName ? hashCatColor(trimmedNewCatName) : '#c9b98f';
+  const newCatPreviewInitial = trimmedNewCatName ? trimmedNewCatName.charAt(0).toUpperCase() : '?';
   const [isExpanded, setIsExpanded] = useState(false);
   const [viewportMetrics, setViewportMetrics] = useState(null);
   const sheetRef = useRef(null);
@@ -199,21 +201,39 @@ export function AddSheet({
                   />
                 </div>
                 <div className="cb-category-grid">
-                  {categoriesForPicker.map((cat) => (
-                    <button
-                      type="button"
-                      key={cat.id}
-                      className="cb-category-chip hover-lift"
-                      onClick={cat.select}
-                      style={{ background: cat.chipBg, color: cat.chipFg }}
-                    >
-                      <div className="cb-coin-chip-face" style={{ background: cat.face }}>
-                        <div className="cb-coin-chip-rim" />
-                        <span className="cb-coin-chip-letter">{cat.initial}</span>
-                      </div>
-                      {cat.name}
-                    </button>
-                  ))}
+                  {categoriesForPicker.map((cat, i) => {
+                    const startsRest = i > 0 && categoriesForPicker[i - 1].favorite && !cat.favorite;
+                    return (
+                      <Fragment key={cat.id}>
+                        {startsRest && <span className="cb-category-group-break" aria-hidden="true" />}
+                        <span className="cb-category-chip-wrap">
+                          <button
+                            type="button"
+                            className="cb-category-chip hover-lift"
+                            onClick={cat.select}
+                            style={{ background: cat.chipBg, color: cat.chipFg }}
+                          >
+                            <div className="cb-coin-chip-face" style={{ background: cat.face }}>
+                              <div className="cb-coin-chip-rim" />
+                              <span className="cb-coin-chip-letter">{cat.initial}</span>
+                            </div>
+                            {cat.name}
+                          </button>
+                          <button
+                            type="button"
+                            className="cb-category-star"
+                            onClick={cat.toggleFavorite}
+                            aria-pressed={cat.favorite}
+                            aria-label={cat.favorite ? t.unfavoriteCategory : t.favoriteCategory}
+                            title={cat.favorite ? t.unfavoriteCategory : t.favoriteCategory}
+                          >
+                            {cat.favorite ? '★' : '☆'}
+                          </button>
+                        </span>
+                      </Fragment>
+                    );
+                  })}
+                  <span className="cb-category-group-break cb-category-new-break" aria-hidden="true" />
                   <button
                     type="button"
                     className="cb-category-chip cb-category-chip-new hover-lift"
@@ -227,26 +247,20 @@ export function AddSheet({
 
             {addingCategory && (
               <div className="cb-new-cat-panel">
-                <input
-                  type="text"
-                  placeholder={t.newCatPlaceholder}
-                  value={newCatName}
-                  onChange={onNewCatNameChange}
-                  onFocus={keepFocusedFieldVisible}
-                  onKeyDown={preventExpenseSubmit}
-                  className="cb-input"
-                  style={{ marginBottom: 8 }}
-                />
-                <div style={{ display: 'flex', gap: 6, marginBottom: 8 }}>
-                  {swatches.map((sw, i) => (
-                    <button
-                      type="button"
-                      key={i}
-                      className="cb-swatch hover-swatch"
-                      onClick={sw.select}
-                      style={{ background: sw.hex, border: sw.border }}
-                    />
-                  ))}
+                <div className="cb-new-cat-input-row">
+                  <div className="cb-new-cat-coin" style={{ background: coinFace(newCatPreviewColor) }}>
+                    <div className="cb-new-cat-coin-rim" />
+                    <span className="cb-new-cat-coin-letter">{newCatPreviewInitial}</span>
+                  </div>
+                  <input
+                    type="text"
+                    placeholder={t.newCatPlaceholder}
+                    value={newCatName}
+                    onChange={onNewCatNameChange}
+                    onFocus={keepFocusedFieldVisible}
+                    onKeyDown={preventExpenseSubmit}
+                    className="cb-input"
+                  />
                 </div>
                 <div style={{ display: 'flex', gap: 8 }}>
                   <button type="button" className="cb-btn-solid cb-btn-flex hover-lift" onClick={onConfirmNewCategory}>
