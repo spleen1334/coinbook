@@ -4,6 +4,7 @@ import { DEMO_EXPENSES } from './data/demoExpenses.js';
 import { MONTHS, MONTHS_BY_LANGUAGE, CATEGORY_NAMES_BY_LANGUAGE, UI_TEXT } from './data/i18n.js';
 import { LedgerScreen } from './components/LedgerScreen.jsx';
 import { ChartScreen } from './components/ChartScreen.jsx';
+import { ChartPeriodControls } from './components/ChartPeriodControls.jsx';
 import { SettingsScreen } from './components/SettingsScreen.jsx';
 import { AddSheet } from './components/AddSheet.jsx';
 import { isoOf, formatShortDate } from './utils/date.js';
@@ -688,7 +689,12 @@ export default class App extends React.Component {
                 />
               )}
               {isHome && <LedgerScreen key={s.swipeTick} anim={v.contentAnim} v={v} t={t} />}
-              {isGraph && <ChartScreen key={s.swipeTick} anim={v.contentAnim} v={v} t={t} />}
+              {isGraph && (
+                <>
+                  <ChartPeriodControls app={this} t={t} hidden={s.searchOpen || v.isSearching} />
+                  <ChartScreen key={s.swipeTick} anim={v.contentAnim} v={v} t={t} />
+                </>
+              )}
             </div>
 
             {/* ===== FIXED FOOTER ===== */}

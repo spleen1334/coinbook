@@ -696,6 +696,45 @@ a:hover {
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
+.cb-total-amount.cb-amount-band-white {
+  color: #b5432e;
+}
+.cb-donut-amount.cb-amount-band-white {
+  color: #2c2416;
+}
+.cb-total-amount.cb-amount-band-blue,
+.cb-donut-amount.cb-amount-band-blue {
+  color: #52707a;
+}
+.cb-total-amount.cb-amount-band-green,
+.cb-donut-amount.cb-amount-band-green {
+  color: #46745b;
+}
+.cb-total-amount.cb-amount-band-yellow,
+.cb-donut-amount.cb-amount-band-yellow {
+  color: #8a682f;
+}
+.cb-total-amount.cb-amount-band-dark-red,
+.cb-donut-amount.cb-amount-band-dark-red {
+  color: #8c4938;
+}
+.cb-total-amount.cb-amount-band-bright-red,
+.cb-donut-amount.cb-amount-band-bright-red {
+  color: #9f432f;
+}
+.cb-total-amount.cb-amount-band-burgundy,
+.cb-donut-amount.cb-amount-band-burgundy {
+  color: #4b2933;
+}
+.cb-donut-amount.cb-amount-band-white,
+.cb-donut-amount.cb-amount-band-blue,
+.cb-donut-amount.cb-amount-band-green,
+.cb-donut-amount.cb-amount-band-yellow,
+.cb-donut-amount.cb-amount-band-dark-red,
+.cb-donut-amount.cb-amount-band-bright-red,
+.cb-donut-amount.cb-amount-band-burgundy {
+  font-weight: 700;
+}
 .cb-total-value .cb-currency-badge {
   flex: none;
   width: 40px;
@@ -788,6 +827,31 @@ a:hover {
 .cb-ledger-period-arrow:active {
   background: transparent;
   transform: translateY(-50%) scale(0.86);
+}
+
+.cb-chart-period-controls {
+  position: absolute;
+  top: 8px;
+  left: 14px;
+  right: 14px;
+  height: 204px;
+  z-index: 2;
+  pointer-events: none;
+}
+.cb-chart-period-controls .cb-ledger-period-arrow {
+  appearance: none;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  pointer-events: auto;
+}
+.cb-chart-period-controls .cb-ledger-period-arrow:focus-visible {
+  outline: 3px solid #2f6b52;
+  outline-offset: 3px;
+}
+.cb-chart-period-controls-hidden {
+  visibility: hidden;
+  pointer-events: none;
 }
 
 .cb-perforation {
@@ -940,6 +1004,7 @@ a:hover {
   background-image: repeating-linear-gradient(#f4ecd8 0px, #f4ecd8 33px, #ede2c6 34px);
 }
 .cb-content-graph {
+  position: relative;
   overflow: hidden;
   padding-bottom: 14px;
 }
@@ -1246,6 +1311,7 @@ a:hover {
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.1px;
 }
+
 .cb-coin-legend-face {
   position: relative;
   width: 24px;

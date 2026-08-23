@@ -28,6 +28,20 @@ npm run deploy
 
 `npm run deploy` runs `npm run build:pages` and publishes `dist/` with `gh-pages`.
 
+## Release checklist
+
+Before deploying a release:
+
+- Increment the version in `package.json` and `package-lock.json`.
+- Add a dated entry to `CHANGELOG.md`.
+- Switch to a clean, up-to-date `main` checkout before merging the release branch.
+- Merge the release branch into `main`.
+- Run `npm run check` on `main` before tagging.
+- Create an annotated `vX.Y.Z` tag on the intended `main` merge commit.
+- Push `main` and the tag.
+- Check out that tag from `main` and only deploy to GitHub Pages from that checkout with `npm run deploy`.
+- Smoke-test `https://spleen1334.github.io/coinbook/`, including service-worker cache and update behavior.
+
 ## Custom domain or root deploy
 
 For a root deployment such as `https://example.com/`, use the default base path:

@@ -42,7 +42,11 @@ export function ChartScreen({ anim, v, t }) {
           <div className="cb-donut-center">
             <div className="cb-donut-label">{v.donutCenterLabel}</div>
             <div className="cb-donut-value">
-              <span className="cb-donut-amount">{v.donutCenterValue}</span>
+              <span
+                className={`cb-donut-amount${v.donutCenterAmountBandClass ? ` ${v.donutCenterAmountBandClass}` : ''}`}
+              >
+                {v.donutCenterValue}
+              </span>
               <CurrencyBadge currency={v.donutCenterCurrency} size="sm" />
             </div>
           </div>
