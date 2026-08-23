@@ -2,6 +2,7 @@ import { PeriodIcon } from './PeriodIcon.jsx';
 import { CoinScatter } from './CoinScatter.jsx';
 import { CurrencyBadge } from './CurrencyBadge.jsx';
 import { APP_ICON_URL } from '../utils/appIcon.js';
+import { amountBandClass } from '../utils/amountBand.js';
 
 export function AppHeader({ app, s, v, t }) {
   const isSettings = s.screen === 'settings';
@@ -13,15 +14,9 @@ export function AppHeader({ app, s, v, t }) {
   const periodRowClass = isGraph ? 'cb-period-row cb-period-row-graph' : 'cb-period-row';
 
   const periodNav = (
-    <div className={isGraph ? 'cb-period-nav cb-period-nav-compact' : 'cb-period-nav'}>
+    <div className="cb-period-nav">
       <div className="cb-flourish" />
-      <div className="cb-chevron hover-chevron" onClick={() => app.shiftPeriod(-1)}>
-        ‹
-      </div>
       <div className="cb-period-pill">{app.getPeriodLabel()}</div>
-      <div className="cb-chevron hover-chevron" onClick={() => app.shiftPeriod(1)}>
-        ›
-      </div>
       <div className="cb-flourish" />
     </div>
   );
@@ -115,7 +110,7 @@ export function AppHeader({ app, s, v, t }) {
                     <CoinScatter tick={s.coinBurstTick} />
                     <div className="cb-total-label">{t.totalSpent}</div>
                     <div className="cb-total-value">
-                      <span className="cb-total-amount">
+                      <span className={`cb-total-amount ${amountBandClass(app.computeFilteredTotal())}`}>
                         {app.convertAndFormat(s.displayedTotal, s.currency, false)}
                       </span>
                       <CurrencyBadge currency={s.currency} size="md" />

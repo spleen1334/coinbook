@@ -2,6 +2,7 @@ import { UI_TEXT, MONTHS_BY_LANGUAGE, MONTHS } from '../data/i18n.js';
 import { formatShortDate } from '../utils/date.js';
 import { formatNumber } from '../utils/money.js';
 import { coinFace } from '../utils/coin.js';
+import { amountBandClass } from '../utils/amountBand.js';
 
 const CIRC = 2 * Math.PI * 38;
 const INK = '#2c2416';
@@ -267,6 +268,7 @@ export function buildViewData(app) {
     ? app.convertAndFormat(hoverCat.amt, cur, false)
     : app.convertAndFormat(total, cur, false);
   const donutCenterCurrency = cur;
+  const donutCenterAmountBandClass = hoverCat ? '' : amountBandClass(total);
 
   const periods = buildAccentToggle(
     [
@@ -351,6 +353,7 @@ export function buildViewData(app) {
     donutCenterLabel,
     donutCenterValue,
     donutCenterCurrency,
+    donutCenterAmountBandClass,
     categoriesForPicker,
     selectedCatObj,
     selectedCatLabel,
