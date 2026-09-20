@@ -1,5 +1,6 @@
 import { Fragment, useEffect, useRef, useState } from 'react';
 import { coinFace, hashCatColor } from '../utils/coin.js';
+import { scrollDeltaToReveal } from '../utils/focusVisibility.js';
 
 export function AddSheet({
   t,
@@ -39,6 +40,31 @@ export function AddSheet({
   const sheetRef = useRef(null);
   const amountRef = useRef(null);
   const dateRef = useRef(null);
+  const actionsRef = useRef(null);
+  const visibilityFrameRef = useRef(null);
+
+  const keepFocusedFieldVisible = () => {
+    if (visibilityFrameRef.current) window.cancelAnimationFrame(visibilityFrameRef.current);
+
+    visibilityFrameRef.current = window.requestAnimationFrame(() => {
+      visibilityFrameRef.current = window.requestAnimationFrame(() => {
+        const sheet = sheetRef.current;
+        const target = document.activeElement;
+        if (!sheet || !(target instanceof HTMLElement) || !sheet.contains(target)) return;
+
+        const sheetRect = sheet.getBoundingClientRect();
+        const actionsTop = actionsRef.current?.getBoundingClientRect().top ?? sheetRect.bottom;
+        const visibleArea = {
+          top: sheetRect.top + 8,
+          bottom: Math.min(sheetRect.bottom - 8, actionsTop - 8)
+        };
+        if (visibleArea.bottom <= visibleArea.top) return;
+
+        const delta = scrollDeltaToReveal(target.getBoundingClientRect(), visibleArea);
+        if (delta) sheet.scrollBy({ top: delta, behavior: 'auto' });
+      });
+    });
+  };
 
   useEffect(() => {
     const viewport = window.visualViewport;
@@ -60,6 +86,7 @@ export function AddSheet({
       const viewportBottom = offsetTop + height;
       const bottomOffset = Math.max(0, Math.round(shellRect.bottom - viewportBottom));
       setViewportMetrics({ height, bottomOffset });
+      keepFocusedFieldVisible();
     };
     updateViewportMetrics();
     window.addEventListener('resize', updateViewportMetrics);
@@ -72,10 +99,17 @@ export function AddSheet({
     };
   }, []);
 
-  const keepFocusedFieldVisible = (event) => {
-    const target = event.currentTarget;
-    window.requestAnimationFrame(() => target.scrollIntoView({ block: 'nearest', behavior: 'smooth' }));
-  };
+  useEffect(() => {
+    keepFocusedFieldVisible();
+  }, [categoryPickerOpen, addingCategory, noteSuggestions.length, isExpanded]);
+
+  useEffect(
+    () => () => {
+      if (visibilityFrameRef.current) window.cancelAnimationFrame(visibilityFrameRef.current);
+    },
+    []
+  );
+
   const focusNext = (event, nextRef) => {
     if (event.key !== 'Enter') return;
     event.preventDefault();
@@ -310,7 +344,7 @@ export function AddSheet({
             </div>
           </div>
 
-          <div className="cb-sheet-actions">
+          <div ref={actionsRef} className="cb-sheet-actions">
             <button type="submit" className="cb-stamp-btn hover-stamp">
               <img
                 className="cb-stamp-icon"

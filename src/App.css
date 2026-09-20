@@ -1938,6 +1938,7 @@ a:hover {
   z-index: 51;
   overflow-y: auto;
   overscroll-behavior: contain;
+  scroll-padding: 8px 8px calc(84px + env(safe-area-inset-bottom));
   -webkit-overflow-scrolling: touch;
   box-shadow: 0 -8px 30px rgba(0, 0, 0, 0.3);
 }
