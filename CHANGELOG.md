@@ -2,6 +2,16 @@
 
 All notable changes to this project are documented here.
 
+## [1.3.0] - 2026-09-20
+
+### Added
+
+- Add weekly, monthly, and yearly recurring expenses with a finite date range, monthly defaults, and a ledger marker.
+
+### Changed
+
+- Rename the ungrouped ledger sort control to Amount.
+
 ## [1.2.0] - 2026-09-20
 
 ### Added

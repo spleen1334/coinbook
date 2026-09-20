@@ -56,7 +56,24 @@ export function LedgerScreen({ anim, v, t }) {
                     </div>
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 14, fontWeight: 700 }}>{row.catName}</div>
+                    <div className="cb-row-category">
+                      <span>{row.catName}</span>
+                      {row.isRecurring && (
+                        <span
+                          className="cb-row-recurrence"
+                          role="img"
+                          aria-label={row.recurrenceLabel}
+                          title={row.recurrenceLabel}
+                        >
+                          <img
+                            className="cb-row-recurrence-icon"
+                            src={`${import.meta.env.BASE_URL}icons/recurring-payment.png`}
+                            alt=""
+                            aria-hidden="true"
+                          />
+                        </span>
+                      )}
+                    </div>
                     {row.showDateInline && <div style={{ fontSize: 11, color: '#a8987a' }}>{row.dateShort}</div>}
                     {row.hasNote && <div style={{ fontSize: 12, color: '#7a6a55' }}>{row.note}</div>}
                   </div>

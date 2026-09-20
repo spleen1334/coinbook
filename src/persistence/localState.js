@@ -1,5 +1,6 @@
 import { normalizeAmount, isHexColor, normalizeIdString, normalizeNote, isValidDateString } from '../utils/validate.js';
 import { hashCatColor } from '../utils/coin.js';
+import { normalizeRecurrence } from '../utils/recurrence.js';
 
 export const STORAGE_KEY = 'coinbook_v1_state';
 const DB_NAME = STORAGE_KEY;
@@ -68,12 +69,14 @@ function normalizeExpenseRecords(raw, validCategoryIds) {
     const amount = normalizeAmount(e.amount, null);
     if (amount === null) return;
     seenIds.add(id);
+    const recurrence = normalizeRecurrence(e.recurrence);
     result.push({
       id,
       amount,
       date: e.date,
       categoryId: validCategoryIds.has(e.categoryId) ? e.categoryId : 'other',
-      note: normalizeNote(e.note)
+      note: normalizeNote(e.note),
+      ...(recurrence ? { recurrence } : {})
     });
   });
   return result;
