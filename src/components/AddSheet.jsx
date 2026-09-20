@@ -1,6 +1,6 @@
 import { Fragment, useEffect, useRef, useState } from 'react';
 import { coinFace, hashCatColor } from '../utils/coin.js';
-import { scrollDeltaToReveal } from '../utils/focusVisibility.js';
+import { scrollDeltaToReveal, visibleAreaForControl } from '../utils/focusVisibility.js';
 
 export function AddSheet({
   t,
@@ -36,12 +36,14 @@ export function AddSheet({
   const newCatPreviewColor = trimmedNewCatName ? hashCatColor(trimmedNewCatName) : '#c9b98f';
   const newCatPreviewInitial = trimmedNewCatName ? trimmedNewCatName.charAt(0).toUpperCase() : '?';
   const [isExpanded, setIsExpanded] = useState(false);
+  const [isMemoFocused, setIsMemoFocused] = useState(false);
   const [viewportMetrics, setViewportMetrics] = useState(null);
   const sheetRef = useRef(null);
   const amountRef = useRef(null);
   const dateRef = useRef(null);
   const actionsRef = useRef(null);
   const visibilityFrameRef = useRef(null);
+  const memoFocusRef = useRef(false);
 
   const keepFocusedFieldVisible = () => {
     if (visibilityFrameRef.current) window.cancelAnimationFrame(visibilityFrameRef.current);
@@ -53,11 +55,8 @@ export function AddSheet({
         if (!sheet || !(target instanceof HTMLElement) || !sheet.contains(target)) return;
 
         const sheetRect = sheet.getBoundingClientRect();
-        const actionsTop = actionsRef.current?.getBoundingClientRect().top ?? sheetRect.bottom;
-        const visibleArea = {
-          top: sheetRect.top + 8,
-          bottom: Math.min(sheetRect.bottom - 8, actionsTop - 8)
-        };
+        const actionsRect = memoFocusRef.current ? null : actionsRef.current?.getBoundingClientRect();
+        const visibleArea = visibleAreaForControl(sheetRect, actionsRect);
         if (visibleArea.bottom <= visibleArea.top) return;
 
         const delta = scrollDeltaToReveal(target.getBoundingClientRect(), visibleArea);
@@ -101,7 +100,7 @@ export function AddSheet({
 
   useEffect(() => {
     keepFocusedFieldVisible();
-  }, [categoryPickerOpen, addingCategory, noteSuggestions.length, isExpanded]);
+  }, [categoryPickerOpen, addingCategory, noteSuggestions.length, isExpanded, isMemoFocused]);
 
   useEffect(
     () => () => {
@@ -117,6 +116,18 @@ export function AddSheet({
   };
   const preventExpenseSubmit = (event) => {
     if (event.key === 'Enter') event.preventDefault();
+  };
+  const setMemoEditing = (memoFocused) => {
+    memoFocusRef.current = memoFocused;
+    setIsMemoFocused(memoFocused);
+  };
+  const focusOtherField = () => {
+    setMemoEditing(false);
+    keepFocusedFieldVisible();
+  };
+  const focusMemo = () => {
+    setMemoEditing(true);
+    keepFocusedFieldVisible();
   };
   const sheetClassName = `cb-sheet${viewportMetrics ? ' cb-sheet-viewport' : ''}${
     isExpanded ? ' cb-sheet-expanded' : ''
@@ -184,7 +195,7 @@ export function AddSheet({
                 placeholder="0.00"
                 value={amount}
                 onChange={onAmountChange}
-                onFocus={keepFocusedFieldVisible}
+                onFocus={focusOtherField}
                 onKeyDown={(event) => focusNext(event, dateRef)}
                 className="cb-input cb-input-amount"
               />
@@ -200,7 +211,7 @@ export function AddSheet({
               name="date"
               value={date}
               onChange={onDateChange}
-              onFocus={keepFocusedFieldVisible}
+              onFocus={focusOtherField}
               className="cb-input cb-input-date"
             />
 
@@ -209,7 +220,7 @@ export function AddSheet({
               type="button"
               className="cb-category-select hover-lift"
               onClick={onToggleCategoryPicker}
-              onFocus={keepFocusedFieldVisible}
+              onFocus={focusOtherField}
             >
               <div className="cb-coin-select-face" style={{ background: coinFace(selectedCategoryColor) }}>
                 <div className="cb-coin-select-rim" />
@@ -227,7 +238,7 @@ export function AddSheet({
                     type="search"
                     value={categoryPickerQuery}
                     onChange={onCategoryPickerQueryChange}
-                    onFocus={keepFocusedFieldVisible}
+                    onFocus={focusOtherField}
                     onKeyDown={preventExpenseSubmit}
                     placeholder="Search categories…"
                     aria-label="Search categories"
@@ -291,7 +302,7 @@ export function AddSheet({
                     placeholder={t.newCatPlaceholder}
                     value={newCatName}
                     onChange={onNewCatNameChange}
-                    onFocus={keepFocusedFieldVisible}
+                    onFocus={focusOtherField}
                     onKeyDown={preventExpenseSubmit}
                     className="cb-input"
                   />
@@ -315,7 +326,8 @@ export function AddSheet({
                 placeholder={t.memoPlaceholder}
                 value={note}
                 onChange={onNoteChange}
-                onFocus={keepFocusedFieldVisible}
+                onFocus={focusMemo}
+                onBlur={() => setMemoEditing(false)}
                 className="cb-input cb-input-memo"
                 aria-autocomplete="list"
                 aria-controls={noteSuggestions.length ? 'cb-note-suggestions' : undefined}
@@ -344,7 +356,7 @@ export function AddSheet({
             </div>
           </div>
 
-          <div ref={actionsRef} className="cb-sheet-actions">
+          <div ref={actionsRef} className={`cb-sheet-actions${isMemoFocused ? ' cb-sheet-actions-memo-editing' : ''}`}>
             <button type="submit" className="cb-stamp-btn hover-stamp">
               <img
                 className="cb-stamp-icon"

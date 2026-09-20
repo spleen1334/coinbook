@@ -2332,3 +2332,6 @@ a:hover {
   padding: 10px 20px calc(10px + env(safe-area-inset-bottom));
   background: linear-gradient(to bottom, rgba(244, 236, 216, 0), #f4ecd8 14px);
 }
+.cb-sheet-viewport .cb-sheet-actions-memo-editing {
+  display: none;
+}

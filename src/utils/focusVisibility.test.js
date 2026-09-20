@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { scrollDeltaToReveal } from './focusVisibility.js';
+import { scrollDeltaToReveal, visibleAreaForControl } from './focusVisibility.js';
 
 describe('scrollDeltaToReveal', () => {
   const visibleArea = { top: 100, bottom: 400 };
@@ -18,5 +18,18 @@ describe('scrollDeltaToReveal', () => {
 
   it('uses the nearest edge when a control is taller than the usable area', () => {
     expect(scrollDeltaToReveal({ top: 40, bottom: 460 }, visibleArea)).toBe(-60);
+  });
+});
+
+describe('visibleAreaForControl', () => {
+  const sheetRect = { top: 100, bottom: 500 };
+  const actionsRect = { top: 420 };
+
+  it('reserves the sticky action area while it is visible', () => {
+    expect(visibleAreaForControl(sheetRect, actionsRect)).toEqual({ top: 108, bottom: 412 });
+  });
+
+  it('uses the full sheet height when memo entry hides the action area', () => {
+    expect(visibleAreaForControl(sheetRect, null)).toEqual({ top: 108, bottom: 492 });
   });
 });
