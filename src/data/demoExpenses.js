@@ -2,8 +2,8 @@
 // Dates are anchored relative to TODAY in App.jsx — feel free to delete all
 // via Settings > Danger Zone once you're ready to use your own data.
 export const DEMO_EXPENSES = [
-  [4.5, -0, 'food', 'Coffee'],
-  [38.0, -0, 'fuel', 'Gas'],
+  [4.5, 0, 'food', 'Coffee'],
+  [38.0, 0, 'fuel', 'Gas'],
   [62.3, -1, 'food', 'Groceries'],
   [24.0, -3, 'entertainment', 'Movie tickets'],
   [15.75, -6, 'medicine', 'Pharmacy'],

@@ -6,8 +6,9 @@
 import { execFileSync } from 'node:child_process';
 import { existsSync, readFileSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-const ROOT = new URL('..', import.meta.url).pathname;
+const ROOT = fileURLToPath(new URL('..', import.meta.url));
 const DIST = join(ROOT, 'dist');
 
 const targets = [
@@ -78,7 +79,7 @@ for (const { label, basePath, env } of targets) {
   const srcHrefValues = [...html.matchAll(/(?:src|href)="([^"]+)"/g)]
     .map((m) => m[1])
     .filter((v) => v.startsWith('/') && !v.startsWith('//'));
-  const misplacedAssets = srcHrefValues.filter((v) => !v.startsWith(basePath) && !v.startsWith('https://'));
+  const misplacedAssets = srcHrefValues.filter((v) => !v.startsWith(basePath));
   if (misplacedAssets.length === 0) {
     pass(`all local asset references are rooted under ${basePath}`);
   } else {

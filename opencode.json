@@ -37,6 +37,7 @@
       "npm run check": "allow",
       "npm run format:check": "allow",
       "npm run lint": "allow",
+      "npm run fix": "allow",
       "npm run build": "allow",
       "npm run build:pages": "allow",
       "npm run deploy": "allow",

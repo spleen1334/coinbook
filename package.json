@@ -16,6 +16,7 @@
     "lint:fix": "eslint . --fix",
     "format": "prettier . --write",
     "format:check": "prettier . --check",
+    "fix": "npm run lint:fix && npm run format",
     "test": "vitest run",
     "test:watch": "vitest",
     "verify:pwa": "node scripts/verify-pwa-build.mjs",

@@ -22,6 +22,7 @@ npm run lint
 npm run lint:fix
 npm run format
 npm run format:check
+npm run fix           # lint:fix + format; routine automatic repairs
 npm run test          # Vitest, run once
 npm run test:watch    # Vitest, watch mode
 npm run verify:pwa    # builds root + /coinbook/ base paths, checks PWA artifacts
@@ -49,8 +50,7 @@ coinbook-pwa/
     main.jsx             React root
     App.jsx               Class app shell: state, persistence hookup, event handlers, screen orchestration
     selectors/             Derived view-model builder (getViewData.js) — pure functions consumed by App.jsx
-    hooks/                 Small stateful helpers used by App.jsx (e.g. the total-counter animator)
-    components/            Stateless presentational screens and shared UI pieces, each with focused props
+    components/            Mostly presentational screens and shared UI pieces; AddSheet owns transient viewport/focus UI state
     App.css                Global styles and animations
     data/                  Static categories, translations, seed entries
     persistence/            IndexedDB/localStorage load/save + validation of stored records
@@ -60,7 +60,7 @@ coinbook-pwa/
   docs/deployment.md      GitHub Pages and PWA deployment notes
 ```
 
-`App.jsx` is a thin orchestrator: state, lifecycle, and event handlers live there, but derived view data lives in `selectors/getViewData.js` and every screen/modal is its own component taking explicit props — none of them receive the whole `App` instance or its raw state/view-model.
+`App.jsx` is a thin orchestrator: state, lifecycle, and event handlers live there, while derived view data lives in `selectors/getViewData.js`. `AddSheet` and `SettingsScreen` take focused props/callbacks; several shell and modal components still receive app, state, or view-model objects.
 
 ## Data and storage
 
@@ -73,21 +73,21 @@ coinbook-pwa/
 
 ## Testing
 
-`npm test` runs the Vitest suite (100 tests as of this writing) covering:
+`npm test` runs the Vitest suite covering:
 
 - Input validation (`utils/validate.js`): dates, amounts, notes, colors, ids
 - Period/date range and label math (`utils/period.js`, `utils/date.js`)
 - CSV parsing and formula-injection escaping (`utils/csv.js`)
 - Category merge/dedup, including prototype-pollution and unsafe-id handling (`importExport/categoryMerge.js`)
 - Full CSV/JSON import/export round-trips (`importExport/csv.js`, `importExport/json.js`)
-- Persisted-state normalization, including the IndexedDB→localStorage fallback path (`persistence/localState.js`)
+- Persisted-state normalization, including IndexedDB failure fallback to localStorage and localStorage-to-IndexedDB migration (`persistence/localState.js`)
 
 There is no CI — `npm run check` (or just `npm test`) is the local gate before deploying. `npm run verify:pwa` additionally builds the app for both the root and `/coinbook/` base paths and checks the PWA artifacts (manifest, service worker, icons, no duplicate manifest/font tags, correctly-rooted asset paths).
 
 ## Documentation
 
 - [Deployment](docs/deployment.md)
-- [Remaining quality-improvement status](plan.md)
+- [Quality-improvement status](plan.md)
 - [Open feature work](TODO.md)
 
 ## Notes
