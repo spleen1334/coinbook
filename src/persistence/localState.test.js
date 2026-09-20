@@ -18,6 +18,34 @@ describe('normalizePersistedState', () => {
     expect(out.expenses).toEqual([{ id: 'e1', amount: 4.5, date: '2026-07-01', categoryId: 'food', note: 'Coffee' }]);
   });
 
+  it('preserves valid recurrence metadata and drops malformed recurrence metadata', () => {
+    const out = normalizePersistedState({
+      expenses: [
+        {
+          id: 'e1',
+          amount: 10,
+          date: '2026-01-01',
+          categoryId: 'other',
+          recurrence: { seriesId: 'r1', frequency: 'monthly', startDate: '2026-01-01', endDate: '2026-12-31' }
+        },
+        {
+          id: 'e2',
+          amount: 10,
+          date: '2026-01-08',
+          categoryId: 'other',
+          recurrence: { seriesId: 'r2', frequency: 'sometimes', startDate: '2026-01-01', endDate: '2026-12-31' }
+        }
+      ]
+    });
+    expect(out.expenses[0].recurrence).toEqual({
+      seriesId: 'r1',
+      frequency: 'monthly',
+      startDate: '2026-01-01',
+      endDate: '2026-12-31'
+    });
+    expect(out.expenses[1]).not.toHaveProperty('recurrence');
+  });
+
   it('defaults favorite to false when the key is absent (old-snapshot upgrade)', () => {
     const out = normalizePersistedState({
       categories: [{ id: 'food', name: 'Food', color: '#8a5a3b' }]

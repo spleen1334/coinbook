@@ -11,6 +11,13 @@ export function AddSheet({
   onAmountChange,
   date,
   onDateChange,
+  recurring,
+  recurrenceFrequency,
+  recurrenceEnd,
+  recurrenceInvalid,
+  onToggleRecurring,
+  onRecurrenceFrequencyChange,
+  onRecurrenceEndChange,
   selectedCategoryColor,
   selectedCategoryLabel,
   categoryPickerOpen,
@@ -204,16 +211,75 @@ export function AddSheet({
               </span>
             </div>
 
-            <div className="cb-field-label">{t.date}</div>
-            <input
-              ref={dateRef}
-              type="date"
-              name="date"
-              value={date}
-              onChange={onDateChange}
-              onFocus={focusOtherField}
-              className="cb-input cb-input-date"
-            />
+            <div className="cb-date-recurrence-row">
+              <div className="cb-date-field">
+                <div className="cb-field-label">{recurring ? t.startDate : t.date}</div>
+                <input
+                  ref={dateRef}
+                  type="date"
+                  name="date"
+                  value={date}
+                  onChange={onDateChange}
+                  onFocus={focusOtherField}
+                  className="cb-input cb-input-date"
+                />
+              </div>
+
+              {!isEditing && (
+                <div className="cb-recurrence-panel">
+                  <button
+                    type="button"
+                    className={`cb-recurrence-toggle${recurring ? ' cb-recurrence-toggle-active' : ''}`}
+                    onClick={onToggleRecurring}
+                    onFocus={focusOtherField}
+                    aria-pressed={recurring}
+                    aria-label={t.recurringPayment}
+                    title={t.recurringPayment}
+                  >
+                    <img
+                      className="cb-recurrence-toggle-icon"
+                      src={`${import.meta.env.BASE_URL}icons/recurring-payment.png`}
+                      alt=""
+                      aria-hidden="true"
+                      draggable="false"
+                    />
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {!isEditing && recurring && (
+              <div className="cb-recurrence-options">
+                <div className="cb-field-label">{t.frequency}</div>
+                <div className="cb-recurrence-frequency" role="group" aria-label={t.frequency}>
+                  {['weekly', 'monthly', 'yearly'].map((frequency) => (
+                    <button
+                      key={frequency}
+                      type="button"
+                      className={`cb-recurrence-frequency-option${
+                        recurrenceFrequency === frequency ? ' cb-recurrence-frequency-option-active' : ''
+                      }`}
+                      onClick={() => onRecurrenceFrequencyChange(frequency)}
+                      aria-pressed={recurrenceFrequency === frequency}
+                    >
+                      {t[frequency]}
+                    </button>
+                  ))}
+                </div>
+                <div className="cb-field-label">{t.endDate}</div>
+                <input
+                  type="date"
+                  name="recurrence-end"
+                  value={recurrenceEnd}
+                  min={date}
+                  onChange={onRecurrenceEndChange}
+                  onFocus={focusOtherField}
+                  className="cb-input cb-input-date"
+                  aria-invalid={recurrenceInvalid}
+                />
+                {recurrenceInvalid && <div className="cb-field-error">{t.recurrenceDateError}</div>}
+              </div>
+            )}
 
             <div className="cb-field-label">{t.category}</div>
             <button
@@ -357,7 +423,7 @@ export function AddSheet({
           </div>
 
           <div ref={actionsRef} className={`cb-sheet-actions${isMemoFocused ? ' cb-sheet-actions-memo-editing' : ''}`}>
-            <button type="submit" className="cb-stamp-btn hover-stamp">
+            <button type="submit" className="cb-stamp-btn hover-stamp" disabled={recurrenceInvalid}>
               <img
                 className="cb-stamp-icon"
                 src={`${import.meta.env.BASE_URL}icons/stamp-expense.png`}

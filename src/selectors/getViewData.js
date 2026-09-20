@@ -33,7 +33,7 @@ function buildPillToggle(options, activeId, selectFn) {
   }));
 }
 
-function mkRow(app, r, catById, lang, cur) {
+function mkRow(app, r, catById, lang, cur, t) {
   const cat = catById[r.categoryId] || { id: 'other', name: 'Other', color: '#888' };
   const label = app.catLabel(cat);
   const isHovered = app.state.hoverCatId === cat.id;
@@ -46,6 +46,10 @@ function mkRow(app, r, catById, lang, cur) {
     catFace: coinFace(cat.color),
     note: r.note,
     hasNote: !!r.note,
+    isRecurring: !!r.recurrence,
+    recurrenceLabel: r.recurrence
+      ? t[`repeats${r.recurrence.frequency[0].toUpperCase()}${r.recurrence.frequency.slice(1)}`]
+      : '',
     amountStr: app.convertAndFormat(r.amount, cur),
     amountParts: app.convertAndFormatParts(r.amount, cur),
     dateShort: formatShortDate(r.date, lang, MONTHS_BY_LANGUAGE, MONTHS),
@@ -64,7 +68,7 @@ function mkRow(app, r, catById, lang, cur) {
   };
 }
 
-function buildGroupedList(app, filtered, catById, lang, cur) {
+function buildGroupedList(app, filtered, catById, lang, cur, t) {
   const sortByDate = (rows, dir = 'desc') =>
     rows.slice().sort((a, b) => (dir === 'asc' ? a.date.localeCompare(b.date) : b.date.localeCompare(a.date)));
   const sortByAmount = (rows, dir = 'desc') =>
@@ -94,7 +98,7 @@ function buildGroupedList(app, filtered, catById, lang, cur) {
           totalParts: app.convertAndFormatParts(sum, cur),
           showHeader: true,
           sortKey: sum,
-          rows: rows.map((r) => ({ ...mkRow(app, r, catById, lang, cur), showDateInline: true }))
+          rows: rows.map((r) => ({ ...mkRow(app, r, catById, lang, cur, t), showDateInline: true }))
         };
       })
       .sort((a, b) => (app.state.categorySortDir === 'asc' ? a.sortKey - b.sortKey : b.sortKey - a.sortKey));
@@ -108,7 +112,7 @@ function buildGroupedList(app, filtered, catById, lang, cur) {
             dateLabel: '',
             showHeader: false,
             rows: sortByAmount(filtered, app.state.ungroupedSortDir).map((r) => ({
-              ...mkRow(app, r, catById, lang, cur),
+              ...mkRow(app, r, catById, lang, cur, t),
               showDateInline: true
             }))
           }
@@ -125,7 +129,7 @@ function buildGroupedList(app, filtered, catById, lang, cur) {
     key: date,
     dateLabel: formatShortDate(date, lang, MONTHS_BY_LANGUAGE, MONTHS),
     showHeader: true,
-    rows: rows.map((r) => ({ ...mkRow(app, r, catById, lang, cur), showDateInline: false }))
+    rows: rows.map((r) => ({ ...mkRow(app, r, catById, lang, cur, t), showDateInline: false }))
   }));
 }
 
@@ -261,7 +265,7 @@ export function buildViewData(app) {
   const filtered = app.getFilteredExpenses();
   const hasEntries = filtered.length > 0;
 
-  const groupedList = buildGroupedList(app, filtered, catById, lang, cur);
+  const groupedList = buildGroupedList(app, filtered, catById, lang, cur, t);
   const { pieSegments, hoverCat, total } = buildPieSegments(app, filtered, catById, cur);
   const donutCenterLabel = hoverCat ? app.catLabel(hoverCat.cat) : t.totalSpent;
   const donutCenterValue = hoverCat
@@ -290,7 +294,7 @@ export function buildViewData(app) {
   const groupingOptionsBase = [
     { id: 'date', label: 'DATE' },
     { id: 'category', label: 'CATEGORY' },
-    { id: 'none', label: 'UNGROUPED' }
+    { id: 'none', label: 'AMOUNT' }
   ].map((o) => ({ ...o, label: o.label + (app.state.listGrouping === o.id ? groupingSortMark(o.id) : '') }));
   const groupingOptions = buildAccentToggle(
     groupingOptionsBase,

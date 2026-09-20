@@ -1097,6 +1097,23 @@ a:hover {
   font-variant-numeric: tabular-nums;
 }
 
+.cb-row-category {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+  font-size: 14px;
+  font-weight: 700;
+}
+.cb-row-recurrence {
+  display: inline-flex;
+  color: #8a7355;
+}
+.cb-row-recurrence-icon {
+  width: 17px;
+  height: 17px;
+  object-fit: contain;
+}
 .cb-coin-badge-ring {
   width: 34px;
   height: 34px;
@@ -1484,6 +1501,88 @@ a:hover {
   border-radius: 8px;
   background: rgba(255, 255, 255, 0.5);
   margin-bottom: 14px;
+}
+.cb-date-recurrence-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+}
+.cb-date-field {
+  min-width: 0;
+  flex: 1;
+}
+.cb-recurrence-panel {
+  flex: none;
+  margin: 0 0 14px;
+}
+.cb-recurrence-toggle {
+  display: inline-grid;
+  width: 44px;
+  height: 44px;
+  place-items: center;
+  padding: 4px;
+  border: 1.5px solid #2c2416;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.5);
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease,
+    box-shadow 0.15s ease,
+    transform 0.15s ease;
+}
+.cb-recurrence-toggle-icon {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+  filter: saturate(0.55) brightness(0.85);
+  opacity: 0.72;
+  transition:
+    filter 0.15s ease,
+    opacity 0.15s ease,
+    transform 0.15s ease;
+}
+.cb-recurrence-toggle-active {
+  border-color: #7a2a1c;
+  background: #f7dfa0;
+  box-shadow: 0 2px 0 #7a2a1c;
+}
+.cb-recurrence-toggle-active .cb-recurrence-toggle-icon {
+  filter: none;
+  opacity: 1;
+  transform: scale(1.08);
+}
+.cb-recurrence-options {
+  margin: 0 0 14px;
+}
+.cb-recurrence-frequency {
+  display: flex;
+  gap: 5px;
+  margin: 0 0 12px;
+}
+.cb-recurrence-frequency-option {
+  flex: 1;
+  min-height: 38px;
+  border: 1.5px solid #2c2416;
+  border-radius: 7px;
+  background: rgba(255, 255, 255, 0.5);
+  color: #2c2416;
+  cursor: pointer;
+  font:
+    700 10px 'Courier Prime',
+    monospace;
+  text-transform: uppercase;
+}
+.cb-recurrence-frequency-option-active {
+  border-color: #7a2a1c;
+  background: #b5432e;
+  color: #f4ecd8;
+}
+.cb-field-error {
+  margin: -8px 0 8px;
+  color: #b5432e;
+  font-size: 11px;
+  font-weight: 700;
 }
 .cb-input-memo {
   font-size: 14px;

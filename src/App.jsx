@@ -8,6 +8,7 @@ import { ChartPeriodControls } from './components/ChartPeriodControls.jsx';
 import { SettingsScreen } from './components/SettingsScreen.jsx';
 import { AddSheet } from './components/AddSheet.jsx';
 import { isoOf, formatShortDate } from './utils/date.js';
+import { generateRecurringDates, getDefaultRecurrenceEnd } from './utils/recurrence.js';
 import { getRange as getRange$, getPeriodLabel as getPeriodLabel$ } from './utils/period.js';
 import {
   convertAndFormat as convertAndFormat$,
@@ -76,6 +77,9 @@ export default class App extends React.Component {
       editingId: null,
       addAmount: '',
       addDate: isoOf(today()),
+      addRecurring: false,
+      addRecurrenceFrequency: 'monthly',
+      addRecurrenceEnd: '',
       addCategoryId: 'food',
       addNote: '',
       addingCategory: false,
@@ -433,6 +437,9 @@ export default class App extends React.Component {
       editingId: null,
       addAmount: '',
       addDate: this.state.period === 'day' ? this.getRange()[0] : isoOf(today()),
+      addRecurring: false,
+      addRecurrenceFrequency: 'monthly',
+      addRecurrenceEnd: '',
       addCategoryId: 'food',
       addNote: '',
       addingCategory: false,
@@ -466,6 +473,9 @@ export default class App extends React.Component {
       noteSuggestionsOpen: false,
       addAmount: String(entry.amount),
       addDate: entry.date,
+      addRecurring: false,
+      addRecurrenceFrequency: 'monthly',
+      addRecurrenceEnd: '',
       addCategoryId: entry.categoryId,
       addNote: entry.note || ''
     });
@@ -476,7 +486,21 @@ export default class App extends React.Component {
     }));
   onCategoryPickerQueryInput = (e) => this.setState({ categoryPickerQuery: e.target.value });
   onAmountInput = (e) => this.setState({ addAmount: e.target.value });
-  onDateInput = (e) => this.setState({ addDate: e.target.value });
+  onDateInput = (e) =>
+    this.setState((s) => ({
+      addDate: e.target.value,
+      addRecurrenceEnd:
+        s.addRecurring && (!s.addRecurrenceEnd || s.addRecurrenceEnd === getDefaultRecurrenceEnd(s.addDate))
+          ? getDefaultRecurrenceEnd(e.target.value)
+          : s.addRecurrenceEnd
+    }));
+  toggleRecurring = () =>
+    this.setState((s) => ({
+      addRecurring: !s.addRecurring,
+      addRecurrenceEnd: s.addRecurring ? '' : getDefaultRecurrenceEnd(s.addDate)
+    }));
+  setRecurrenceFrequency = (frequency) => this.setState({ addRecurrenceFrequency: frequency });
+  onRecurrenceEndInput = (e) => this.setState({ addRecurrenceEnd: e.target.value });
   onNoteInput = (e) => this.setState({ addNote: e.target.value, noteSuggestionsOpen: !!e.target.value.trim() });
   selectNoteSuggestion = (note) => this.setState({ addNote: note, noteSuggestionsOpen: false });
   onNewCatNameInput = (e) => this.setState({ newCatName: e.target.value });
@@ -512,6 +536,9 @@ export default class App extends React.Component {
   submitAdd = () => {
     const amt = parseFloat(this.state.addAmount);
     if (!amt || amt <= 0) return;
+    if (this.state.addRecurring && (!this.state.addRecurrenceEnd || this.state.addRecurrenceEnd < this.state.addDate)) {
+      return;
+    }
     this.requestExpenseTotalReplay();
     if (this.state.editingId) {
       const editId = this.state.editingId;
@@ -529,21 +556,32 @@ export default class App extends React.Component {
       playChaChing();
       this.showToast(UI_TEXT[this.state.language]?.savedToast || 'Saved');
     } else {
-      const id = 'e' + Date.now();
-      const entry = {
-        id,
+      const date = this.state.addDate || isoOf(today());
+      const tick = Date.now();
+      const recurrence = this.state.addRecurring
+        ? {
+            seriesId: 'r' + tick,
+            frequency: this.state.addRecurrenceFrequency,
+            startDate: date,
+            endDate: this.state.addRecurrenceEnd
+          }
+        : null;
+      const dates = recurrence ? generateRecurringDates(date, recurrence.endDate, recurrence.frequency) : [date];
+      const entries = dates.map((expenseDate, index) => ({
+        id: 'e' + tick + (recurrence ? '_' + index : ''),
         amount: amt,
-        date: this.state.addDate || isoOf(today()),
+        date: expenseDate,
         categoryId: this.state.addCategoryId,
-        note: (this.state.addNote || '').trim()
-      };
+        note: (this.state.addNote || '').trim(),
+        ...(recurrence ? { recurrence } : {})
+      }));
       this.setState((s) => ({
-        expenses: [entry, ...s.expenses],
+        expenses: [...entries, ...s.expenses],
         showAdd: false,
         addAmount: '',
         addNote: '',
         addingCategory: false,
-        lastAddedId: id
+        lastAddedId: entries[0].id
       }));
       playChaChing();
       this.showToast(
@@ -719,6 +757,13 @@ export default class App extends React.Component {
               onAmountChange={this.onAmountInput}
               date={s.addDate}
               onDateChange={this.onDateInput}
+              recurring={s.addRecurring}
+              recurrenceFrequency={s.addRecurrenceFrequency}
+              recurrenceEnd={s.addRecurrenceEnd}
+              recurrenceInvalid={s.addRecurring && (!s.addRecurrenceEnd || s.addRecurrenceEnd < s.addDate)}
+              onToggleRecurring={this.toggleRecurring}
+              onRecurrenceFrequencyChange={this.setRecurrenceFrequency}
+              onRecurrenceEndChange={this.onRecurrenceEndInput}
               selectedCategoryColor={v.selectedCatObj.color}
               selectedCategoryLabel={v.selectedCatLabel}
               categoryPickerOpen={s.categoryPickerOpen}

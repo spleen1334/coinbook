@@ -102,3 +102,25 @@ describe('category picker ordering', () => {
     expect(stopped).toBe(true);
   });
 });
+
+describe('ledger recurrence view data', () => {
+  it('labels recurring rows and renames the ungrouped tab to amount', () => {
+    const app = makeApp(DEFAULT_RATES, {
+      categories: [{ id: 'food', name: 'Food', color: '#8a5a3b', favorite: false }],
+      expenses: [
+        {
+          id: 'e1',
+          amount: 10,
+          date: '2026-01-01',
+          categoryId: 'food',
+          recurrence: { seriesId: 'r1', frequency: 'monthly', startDate: '2026-01-01', endDate: '2026-12-31' }
+        }
+      ]
+    });
+    app.getFilteredExpenses = () => app.state.expenses;
+    app.convertAndFormatParts = () => ({ amount: '10.00' });
+    const view = buildViewData(app);
+    expect(view.groupingOptions.find((option) => option.id === 'none').label).toBe('AMOUNT');
+    expect(view.groupedList[0].rows[0]).toMatchObject({ isRecurring: true, recurrenceLabel: 'Repeats monthly' });
+  });
+});

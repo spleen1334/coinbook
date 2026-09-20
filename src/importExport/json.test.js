@@ -87,4 +87,31 @@ describe('parseJsonImport', () => {
     const { categories: merged } = parseJsonImport(json, [], '2026-01-01');
     expect(merged.find((c) => c.name === 'Food').favorite).toBe(true);
   });
+
+  it('preserves recurrence metadata while assigning imported series ids', () => {
+    const text = JSON.stringify({
+      expenses: [
+        {
+          amount: 10,
+          date: '2026-01-01',
+          categoryId: 'food',
+          recurrence: { seriesId: 'r1', frequency: 'monthly', startDate: '2026-01-01', endDate: '2026-12-31' }
+        },
+        {
+          amount: 10,
+          date: '2026-02-01',
+          categoryId: 'food',
+          recurrence: { seriesId: 'r1', frequency: 'monthly', startDate: '2026-01-01', endDate: '2026-12-31' }
+        }
+      ]
+    });
+    const { expenses } = parseJsonImport(text, categories, '2026-01-01');
+    expect(expenses[0].recurrence).toMatchObject({
+      frequency: 'monthly',
+      startDate: '2026-01-01',
+      endDate: '2026-12-31'
+    });
+    expect(expenses[0].recurrence.seriesId).not.toBe('r1');
+    expect(expenses[0].recurrence.seriesId).toBe(expenses[1].recurrence.seriesId);
+  });
 });
