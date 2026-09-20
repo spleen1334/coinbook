@@ -2,20 +2,35 @@
 
 ## Stack and commands
 
-- Vite 6 + React 18 PWA, configured in `vite.config.js` with `vite-plugin-pwa`.
+- Vite 6 + React 19 PWA, configured in `vite.config.js` with `vite-plugin-pwa`.
 - Node 20.19+ is required by the Vite/React plugin toolchain.
 - Install/dev: `npm install`, `npm run dev`.
 - Build/preview: `npm run build`, `npm run preview`.
-- GitHub Pages project build/deploy: `npm run build:pages`, `npm run deploy`.
-- Quality: `npm run lint`, `npm run lint:fix`, `npm run format`, `npm run format:check`, `npm run check`.
+- GitHub Pages project-site build/deploy: `npm run build:pages`, `npm run deploy`.
+- Quality automation uses npm scripts: `npm run lint`, `npm run lint:fix`, `npm run format`, `npm run format:check`, `npm run fix`, `npm run check`. Use `npm run fix` for routine automated repairs and `npm run check` as the complete non-mutating pre-handoff gate.
 - Tests: Vitest, colocated `*.test.js` files; run with `npm test`.
+
+## Delivery workflow
+
+- Start every change from a new branch created from current `main`; do all work and review on that branch. Update the version and add the dated `CHANGELOG.md` entry there before approval.
+- After approval, merge the branch into `main`, run `npm run check` on the merge commit, create an annotated release tag there, then push both `main` and the tag.
+- Only then check out that tag from `main` and run `npm run deploy`. It builds the `/coinbook/` base path and publishes the result to GitHub Pages.
+- Do not deploy directly from a feature branch or before approval, merge, tag, and push.
+
+## Mobile-only product constraint
+
+- Coin Book is designed exclusively for mobile phones and portrait PWA use. Desktop layouts are out of scope.
+- When opened in a desktop browser, preserve the centered phone-sized shell rather than introducing desktop-specific layouts, navigation, interactions, or wide-screen optimizations.
+- Treat touch targets, narrow phone widths, safe areas, the on-screen keyboard, and the Visual Viewport API behavior as primary UI constraints. Preserve the portrait manifest orientation and installed-PWA behavior.
+- Validate UI changes at a 390×844 phone viewport and a narrower phone viewport; use desktop only to confirm the mobile frame remains centered.
 
 ## Project structure
 
-- `src/App.jsx`: class component that owns app state, handlers, derived view data, and screen orchestration.
-- `src/components/`: stateless presentational components for ledger, chart, settings, add/edit sheet, icons, and coin animation.
+- `src/App.jsx`: class component that owns app state, handlers, and screen orchestration.
+- `src/components/`: mostly presentational components for ledger, chart, settings, add/edit sheet, icons, and coin animation; `AddSheet` also owns transient viewport/focus UI state.
+- `src/selectors/`: pure derived view-model builders consumed by `App.jsx`.
 - `src/data/`: static category definitions, translations, swatches, seed data.
-- `src/persistence/`: local storage load/save helpers.
+- `src/persistence/`: IndexedDB-first state load/save helpers with localStorage fallback and migration.
 - `src/importExport/`: JSON/CSV import-export and category merge helpers.
 - `src/utils/`: pure helpers for dates, money formatting, CSV parsing/escaping, downloads, and coin styling.
 - `src/App.css`: global styles, responsive layout, animations.

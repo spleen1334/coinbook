@@ -9,7 +9,7 @@ The quality-improvement pass tracked here is complete. For reference, what was d
 - Category colors are derived deterministically from name (`hashCatColor` in `utils/coin.js`) instead of array position, and self-heal on load for previously auto-colored or corrupted data.
 - Manual category creation now rejects case-insensitive duplicates, matching import-merge behavior.
 - `340px` minimum-width constraint removed; scrollbar affordances restored with a themed thin scrollbar instead of being globally hidden.
-- Vitest test suite added (100 tests) covering persistence, imports/exports, dates, and validation. No CI — tests run locally via `npm test`.
+- Vitest test suite added covering persistence, imports/exports, dates, and validation. No CI — tests run locally via `npm test`.
 - ESLint's `no-unused-vars` re-enabled for real (the actual cause of it being off was missing `react/jsx-uses-vars`, not the rule itself).
 - `npm run verify:pwa` checks both base paths (root and `/coinbook/`) build correctly with no duplicate manifest/font tags and correctly-rooted asset paths.
 

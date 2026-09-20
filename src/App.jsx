@@ -22,7 +22,7 @@ import {
   savePersistedStateAsync,
   pickPersistedState
 } from './persistence/localState.js';
-import { createTotalAnimator } from './hooks/useAnimatedTotal.js';
+import { createTotalAnimator } from './utils/totalAnimator.js';
 import { playChaChing } from './utils/chaChing.js';
 import { buildViewData } from './selectors/getViewData.js';
 import { Splash } from './components/Splash.jsx';

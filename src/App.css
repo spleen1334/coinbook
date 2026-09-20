@@ -668,11 +668,6 @@ a:hover {
   color: #a8916c;
   text-align: center;
 }
-.cb-total-currency {
-  display: flex;
-  justify-content: center;
-  margin-top: 5px;
-}
 .cb-total-value {
   display: flex;
   align-items: flex-end;
@@ -748,15 +743,6 @@ a:hover {
   gap: 8px;
   margin-top: 9px;
 }
-.cb-period-nav-compact {
-  margin-top: 2px;
-}
-.cb-period-nav-compact .cb-chevron {
-  font-size: 19px;
-  font-weight: 900;
-  padding: 2px 9px;
-  color: #6f5432;
-}
 .cb-chart-period-wrap {
   margin: -2px 0 8px;
 }
@@ -766,15 +752,6 @@ a:hover {
   height: 1px;
   background: repeating-linear-gradient(90deg, #8a7355 0 4px, transparent 4px 7px);
   opacity: 0.55;
-}
-.cb-chevron {
-  cursor: pointer;
-  font-size: 15px;
-  font-weight: 700;
-  color: #8a7355;
-  padding: 1px 7px;
-  border-radius: 50%;
-  transition: background 0.15s ease;
 }
 .cb-period-pill {
   font-size: 11px;
@@ -1118,11 +1095,6 @@ a:hover {
   color: #b5432e;
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
-}
-.cb-inline-currency {
-  font-size: 0.72em;
-  letter-spacing: 0.2px;
-  opacity: 0.9;
 }
 
 .cb-coin-badge-ring {
@@ -1496,7 +1468,10 @@ a:hover {
 .cb-input-amount {
   font-family: 'Special Elite', monospace;
   font-size: 26px;
-  padding: 8px 10px;
+  height: 56px;
+  line-height: 32px;
+  -moz-appearance: textfield;
+  padding: 10px 48px 11px 10px;
   border: 1.5px solid #2c2416;
   border-radius: 8px;
   background: rgba(255, 255, 255, 0.5);
@@ -2256,12 +2231,6 @@ a:hover {
   position: static;
   padding: 0 20px 28px;
   background: none;
-}
-.cb-input-amount {
-  height: 56px;
-  line-height: 32px;
-  -moz-appearance: textfield;
-  padding: 10px 48px 11px 10px;
 }
 .cb-input-amount::placeholder {
   font-size: 24px;

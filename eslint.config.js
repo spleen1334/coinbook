@@ -9,7 +9,6 @@ export default [
     ignores: ['dist', 'node_modules', 'coverage', '.slim', 'package-lock.json']
   },
   {
-    ...js.configs.recommended,
     files: ['**/*.{js,jsx}'],
     languageOptions: {
       ecmaVersion: 'latest',

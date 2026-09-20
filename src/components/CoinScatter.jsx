@@ -1,6 +1,5 @@
 export function CoinScatter({ tick }) {
   const coins = [
-    { key: 'cluster' },
     { key: 'a', cls: 'cb-coin-a', delay: 0.05 },
     { key: 'b', cls: 'cb-coin-b', delay: 0.12 },
     { key: 'c', cls: 'cb-coin-c', delay: 0.18 },
@@ -19,7 +18,7 @@ export function CoinScatter({ tick }) {
           <span className="cb-coin-letter">C</span>
         </div>
       </div>
-      {coins.slice(1).map((c) => (
+      {coins.map((c) => (
         <div
           key={c.key + tick}
           className={'cb-coin-scatter ' + c.cls}

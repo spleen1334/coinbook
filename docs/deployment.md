@@ -32,10 +32,10 @@ npm run deploy
 
 Before deploying a release:
 
+- Update local `main`, create a new release branch from it, and work, validate, and review on that branch.
 - Increment the version in `package.json` and `package-lock.json`.
 - Add a dated entry to `CHANGELOG.md`.
-- Switch to a clean, up-to-date `main` checkout before merging the release branch.
-- Merge the release branch into `main`.
+- Merge the approved release branch into a clean, up-to-date `main` checkout.
 - Run `npm run check` on `main` before tagging.
 - Create an annotated `vX.Y.Z` tag on the intended `main` merge commit.
 - Push `main` and the tag.
