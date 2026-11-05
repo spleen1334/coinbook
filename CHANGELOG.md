@@ -2,6 +2,12 @@
 
 All notable changes to this project are documented here.
 
+## [1.3.2] - 2026-11-05
+
+### Added
+
+- Show a subtle app-version hint in Settings, sourced from the package version so it stays current with releases.
+
 ## [1.3.1] - 2026-11-05
 
 ### Fixed
