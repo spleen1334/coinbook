@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import App from './App.jsx';
 import { parseJsonImport } from './importExport/json.js';
 import { buildViewData } from './selectors/getViewData.js';
@@ -8,6 +8,38 @@ import * as recurrence from './utils/recurrence.js';
 import * as persistence from './persistence/localState.js';
 
 vi.mock('./utils/chaChing.js', () => ({ playChaChing: vi.fn() }));
+
+describe('App expense selection cache', () => {
+  afterEach(() => vi.useRealTimers());
+
+  it('reuses selection across animation-only state updates and facade calls', () => {
+    const app = new App({});
+    const first = app.getExpenseData();
+    app.state = { ...app.state, displayedTotal: 123, coinBurstTick: 4 };
+    expect(app.getExpenseData()).toBe(first);
+    expect(app.getFilteredExpenses()).toBe(first.filtered);
+    expect(app.computeFilteredTotal()).toBe(first.total);
+  });
+
+  it('recomputes calendar bounds at rollover without a state update', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(2026, 0, 31, 23, 59));
+    const app = new App({});
+    app.state = {
+      ...app.state,
+      period: 'day',
+      expenses: [
+        { id: 'a', date: '2026-01-31', amount: 1 },
+        { id: 'b', date: '2026-02-01', amount: 2 }
+      ]
+    };
+    const first = app.getExpenseData();
+    expect(first.total).toBe(1);
+    vi.setSystemTime(new Date(2026, 1, 1, 0, 1));
+    expect(app.getExpenseData()).not.toBe(first);
+    expect(app.computeFilteredTotal()).toBe(2);
+  });
+});
 
 function deferred() {
   let resolve;

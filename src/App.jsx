@@ -1,13 +1,13 @@
 import React from 'react';
 import { CATEGORY_DEFINITIONS } from './data/categories.js';
 import { DEMO_EXPENSES } from './data/demoExpenses.js';
-import { MONTHS, MONTHS_BY_LANGUAGE, CATEGORY_NAMES_BY_LANGUAGE, UI_TEXT } from './data/i18n.js';
+import { MONTHS, MONTHS_BY_LANGUAGE, UI_TEXT } from './data/i18n.js';
 import { LedgerScreen } from './components/LedgerScreen.jsx';
 import { ChartScreen } from './components/ChartScreen.jsx';
 import { ChartPeriodControls } from './components/ChartPeriodControls.jsx';
 import { SettingsScreen } from './components/SettingsScreen.jsx';
 import { AddSheet } from './components/AddSheet.jsx';
-import { isoOf, formatShortDate } from './utils/date.js';
+import { isoOf } from './utils/date.js';
 import { generateRecurringDates, getDefaultRecurrenceEnd, isValidRecurrenceFrequency } from './utils/recurrence.js';
 import { isValidDateString, MAX_NOTE_LENGTH, normalizeAmount, normalizeNote } from './utils/validate.js';
 import { getRange as getRange$, getPeriodLabel as getPeriodLabel$ } from './utils/period.js';
@@ -16,6 +16,7 @@ import {
   convertAndFormatParts as convertAndFormatParts$
 } from './utils/format.js';
 import { downloadFile } from './utils/download.js';
+import { categoryLabel, createExpenseDataSelector } from './selectors/expenseData.js';
 import { fuzzyMatch } from './utils/search.js';
 import { hashCatColor } from './utils/coin.js';
 import {
@@ -56,6 +57,7 @@ function buildSeedCategories() {
 export default class App extends React.Component {
   constructor(props) {
     super(props);
+    this._selectExpenseData = createExpenseDataSelector();
     this.state = {
       period: 'month',
       periodOffset: 0,
@@ -234,39 +236,28 @@ export default class App extends React.Component {
     );
   }
 
-  getFilteredExpenses() {
-    const lang = this.state.language;
+  getExpenseData() {
     const [start, end] = this.getRange();
-    const catById = Object.create(null);
-    this.state.categories.forEach((c) => {
-      catById[c.id] = c;
-    });
-    const query = (this.state.searchQuery || '').trim().toLowerCase();
-    if (query.length > 0) {
-      return this.state.expenses.filter((e) => {
-        const cat = catById[e.categoryId] || { id: 'other', name: 'Other' };
-        const hay = [
-          e.note,
-          this.catLabel(cat),
-          formatShortDate(e.date, lang, MONTHS_BY_LANGUAGE, MONTHS),
-          e.date,
-          String(e.amount)
-        ]
-          .join(' ')
-          .toLowerCase();
-        return fuzzyMatch(query, hay);
-      });
-    }
-    return this.state.expenses.filter((e) => e.date >= start && e.date <= end);
+    return this._selectExpenseData(
+      this.state.expenses,
+      this.state.categories,
+      this.state.language,
+      this.state.searchQuery,
+      start,
+      end
+    );
+  }
+
+  getFilteredExpenses() {
+    return this.getExpenseData().filtered;
   }
 
   computeFilteredTotal() {
-    return this.getFilteredExpenses().reduce((s, e) => s + e.amount, 0);
+    return this.getExpenseData().total;
   }
 
   catLabel(cat) {
-    const names = CATEGORY_NAMES_BY_LANGUAGE[this.state.language] || CATEGORY_NAMES_BY_LANGUAGE.en;
-    return Object.hasOwn(names, cat.id) ? names[cat.id] : cat.name;
+    return categoryLabel(cat, this.state.language);
   }
 
   convertAndFormat(amount, cur, includeCurrency = true) {
