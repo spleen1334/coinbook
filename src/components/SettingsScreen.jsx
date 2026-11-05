@@ -1,4 +1,5 @@
 import { CurrencyBadge } from './CurrencyBadge.jsx';
+import { version } from '../../package.json';
 
 export function SettingsScreen({
   t,
@@ -207,6 +208,7 @@ export function SettingsScreen({
           {t.deleteAll}
         </div>
       </div>
+      <div className="cb-settings-version">Coin Book · v{version}</div>
     </div>
   );
 }
