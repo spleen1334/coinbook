@@ -2,6 +2,22 @@
 
 All notable changes to this project are documented here.
 
+## [1.3.1] - 2026-11-05
+
+### Fixed
+
+- Preserve saves through localStorage when IndexedDB fails, recover the latest fallback snapshot, and warn when neither backend can save.
+- Prevent imported category IDs such as `__proto__` and `constructor` from crashing ledger, chart, or category-picker models.
+- Validate add/edit submissions before changing entries so amounts, notes, dates, and recurrence settings remain consistent after reload.
+- Display the correct RUB and CNY symbols throughout string and parts formatting.
+- Validate stored display settings and safely fill partial number-format preferences.
+
+### Changed
+
+- Share pure expense filtering and totals, and reuse cached view models during animation-only updates without changing ledger/search behavior.
+- Update compatible runtime and development dependencies, including Vite and Vitest security fixes. Production dependency audit is clean; six low/moderate PWA/Workbox build-tool findings remain pending a verified upstream fix.
+- Expand regression coverage for storage failures, imports, submission round trips, formatting, settings, and cache invalidation.
+
 ## [1.3.0] - 2026-09-20
 
 ### Added

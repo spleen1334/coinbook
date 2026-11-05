@@ -49,7 +49,7 @@ coinbook-pwa/
   src/
     main.jsx             React root
     App.jsx               Class app shell: state, persistence hookup, event handlers, screen orchestration
-    selectors/             Derived view-model builder (getViewData.js) — pure functions consumed by App.jsx
+    selectors/             Pure expense selection and per-App cached view models
     components/            Mostly presentational screens and shared UI pieces; AddSheet owns transient viewport/focus UI state
     App.css                Global styles and animations
     data/                  Static categories, translations, seed entries
@@ -60,12 +60,13 @@ coinbook-pwa/
   docs/deployment.md      GitHub Pages and PWA deployment notes
 ```
 
-`App.jsx` is a thin orchestrator: state, lifecycle, and event handlers live there, while derived view data lives in `selectors/getViewData.js`. `AddSheet` and `SettingsScreen` take focused props/callbacks; several shell and modal components still receive app, state, or view-model objects.
+`App.jsx` owns state, lifecycle, and event handlers. Pure filtering and totals live in `selectors/expenseData.js`; `selectors/getViewData.js` builds the render models. Per-App caches reuse results across animation and toast updates. Keep state updates immutable and update `VIEW_STATE_KEYS` plus its invalidation tests when a view model starts reading another state field. Calendar bounds are recalculated on access. `AddSheet` and `SettingsScreen` take focused props/callbacks; several shell and modal components still receive app, state, or view-model objects.
 
 ## Data and storage
 
-- Runtime persistence tries IndexedDB first (`coinbook_v1_state` store), falling back to `localStorage` (same key) if IndexedDB is unavailable or fails, with a one-time migration from `localStorage` into IndexedDB.
+- Saves try IndexedDB first, falling back to `localStorage` under the same `coinbook_v1_state` key. On load, a valid fallback snapshot takes precedence over potentially stale IndexedDB data and is migrated back; fallback data is removed only after the IndexedDB write commits. If neither backend can save, an error toast advises exporting before closing.
 - Stored state includes expenses, categories, language, currency, rates, number format, list grouping, sort directions, and selected period.
+- Add/edit submissions validate amounts, dates, recurrence settings, and the 300-character note limit before changing expenses. Amounts are rounded to two decimal places, matching reload normalization; invalid submissions keep the sheet open. Stored display settings are validated and partial number formats receive defaults.
 - Every persisted expense/category record is validated on load (`src/utils/validate.js` + `src/persistence/localState.js`): invalid dates, non-positive amounts, and unrecognized colors are dropped or self-healed rather than trusted as-is.
 - Category colors are derived deterministically from the category name (`hashCatColor` in `src/utils/coin.js`), not from array position — the same name always produces the same color, and previously auto-colored or corrupted colors self-heal on the next load.
 - JSON export intentionally includes only `{ categories, expenses }`.
@@ -81,6 +82,8 @@ coinbook-pwa/
 - Category merge/dedup, including prototype-pollution and unsafe-id handling (`importExport/categoryMerge.js`)
 - Full CSV/JSON import/export round-trips (`importExport/csv.js`, `importExport/json.js`)
 - Persisted-state normalization, including IndexedDB failure fallback to localStorage and localStorage-to-IndexedDB migration (`persistence/localState.js`)
+- App submission/reload round trips, imported category labels, and unsuccessful-save feedback (`App.test.js`)
+- Expense search, grouping/sort order, totals, and cache invalidation, including calendar rollover (`selectors/`)
 
 There is no CI — `npm run check` (or just `npm test`) is the local gate before deploying. `npm run verify:pwa` additionally builds the app for both the root and `/coinbook/` base paths and checks the PWA artifacts (manifest, service worker, icons, no duplicate manifest/font tags, correctly-rooted asset paths).
 
@@ -95,3 +98,4 @@ There is no CI — `npm run check` (or just `npm test`) is the local gate before
 - Formatting uses Prettier: single quotes, semicolons, no trailing commas, 120-character print width.
 - Accessibility (keyboard navigation, dialog semantics, accessible chart alternatives) is a known gap, intentionally deferred — see `plan.md`.
 - GitHub Pages project builds require `VITE_BASE_PATH=/coinbook/`; see deployment docs for root/custom-domain notes.
+- Dependency audit on 2026-11-05: production dependencies have no reported vulnerabilities. Six low/moderate build-tool findings remain in the PWA/Workbox chain (`deepmerge`, `glob`, `minimatch`, and dependent packages). No compatible complete fix was demonstrated; the suggested PWA downgrade and unverified overrides were intentionally avoided. Recheck upstream fixes before the next dependency update.
