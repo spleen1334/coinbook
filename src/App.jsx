@@ -8,7 +8,8 @@ import { ChartPeriodControls } from './components/ChartPeriodControls.jsx';
 import { SettingsScreen } from './components/SettingsScreen.jsx';
 import { AddSheet } from './components/AddSheet.jsx';
 import { isoOf, formatShortDate } from './utils/date.js';
-import { generateRecurringDates, getDefaultRecurrenceEnd } from './utils/recurrence.js';
+import { generateRecurringDates, getDefaultRecurrenceEnd, isValidRecurrenceFrequency } from './utils/recurrence.js';
+import { isValidDateString, MAX_NOTE_LENGTH, normalizeAmount, normalizeNote } from './utils/validate.js';
 import { getRange as getRange$, getPeriodLabel as getPeriodLabel$ } from './utils/period.js';
 import {
   convertAndFormat as convertAndFormat$,
@@ -534,17 +535,42 @@ export default class App extends React.Component {
     }));
 
   submitAdd = () => {
-    const amt = parseFloat(this.state.addAmount);
-    if (!amt || amt <= 0) return;
-    if (this.state.addRecurring && (!this.state.addRecurrenceEnd || this.state.addRecurrenceEnd < this.state.addDate)) {
+    const { addDate: date, addNote, addRecurring, addRecurrenceEnd, addRecurrenceFrequency, editingId } = this.state;
+    const text = UI_TEXT[this.state.language] || UI_TEXT.en;
+    const amt = normalizeAmount(this.state.addAmount, null);
+    if (amt === null || amt <= 0) {
+      this.showToast(text.invalidAmountToast, 'error');
       return;
     }
+    if (!isValidDateString(date)) {
+      this.showToast(text.invalidDateToast, 'error');
+      return;
+    }
+    if (typeof addNote === 'string' && addNote.trim().length > MAX_NOTE_LENGTH) {
+      this.showToast(text.noteTooLongToast, 'error');
+      return;
+    }
+    const note = normalizeNote(addNote);
+    let dates = [date];
+    if (addRecurring) {
+      if (
+        !isValidRecurrenceFrequency(addRecurrenceFrequency) ||
+        !isValidDateString(addRecurrenceEnd) ||
+        addRecurrenceEnd < date
+      ) {
+        this.showToast(text.invalidRecurrenceToast, 'error');
+        return;
+      }
+      dates = generateRecurringDates(date, addRecurrenceEnd, addRecurrenceFrequency);
+      if (!dates.length) {
+        this.showToast(text.invalidRecurrenceToast, 'error');
+        return;
+      }
+    }
     this.requestExpenseTotalReplay();
-    if (this.state.editingId) {
-      const editId = this.state.editingId;
-      const date = this.state.addDate || isoOf(today());
+    if (editingId) {
+      const editId = editingId;
       const categoryId = this.state.addCategoryId;
-      const note = (this.state.addNote || '').trim();
       this.setState((s) => ({
         expenses: s.expenses.map((e) => (e.id === editId ? { ...e, amount: amt, date, categoryId, note } : e)),
         showAdd: false,
@@ -556,7 +582,6 @@ export default class App extends React.Component {
       playChaChing();
       this.showToast(UI_TEXT[this.state.language]?.savedToast || 'Saved');
     } else {
-      const date = this.state.addDate || isoOf(today());
       const tick = Date.now();
       const recurrence = this.state.addRecurring
         ? {
@@ -566,13 +591,12 @@ export default class App extends React.Component {
             endDate: this.state.addRecurrenceEnd
           }
         : null;
-      const dates = recurrence ? generateRecurringDates(date, recurrence.endDate, recurrence.frequency) : [date];
       const entries = dates.map((expenseDate, index) => ({
         id: 'e' + tick + (recurrence ? '_' + index : ''),
         amount: amt,
         date: expenseDate,
         categoryId: this.state.addCategoryId,
-        note: (this.state.addNote || '').trim(),
+        note,
         ...(recurrence ? { recurrence } : {})
       }));
       this.setState((s) => ({

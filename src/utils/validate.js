@@ -1,7 +1,7 @@
 const ISO_DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 const HEX_COLOR_RE = /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/;
 const HSL_COLOR_RE = /^hsla?\(\s*\d{1,3}\s*,\s*\d{1,3}%\s*,\s*\d{1,3}%\s*(,\s*(0|1|0?\.\d+)\s*)?\)$/;
-const MAX_NOTE_LENGTH = 300;
+export const MAX_NOTE_LENGTH = 300;
 const MAX_AMOUNT = 1e12;
 
 export function isValidDateString(value) {
