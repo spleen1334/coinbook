@@ -5,8 +5,106 @@ import { buildViewData } from './selectors/getViewData.js';
 import { normalizePersistedState } from './persistence/localState.js';
 import { UI_TEXT } from './data/i18n.js';
 import * as recurrence from './utils/recurrence.js';
+import * as persistence from './persistence/localState.js';
 
 vi.mock('./utils/chaChing.js', () => ({ playChaChing: vi.fn() }));
+
+function deferred() {
+  let resolve;
+  const promise = new Promise((done) => {
+    resolve = done;
+  });
+  return { promise, resolve };
+}
+
+function persistenceApp() {
+  const app = submissionApp({ persistenceReady: true });
+  app._mounted = true;
+  app._lastTotal = app.computeFilteredTotal();
+  app._persistSnapshot = persistence.pickPersistedState(app.state);
+  return app;
+}
+
+function changeExpenses(app) {
+  app.state = { ...app.state, expenses: [...app.state.expenses] };
+  app.componentDidUpdate();
+}
+
+describe('App persistence failure feedback', () => {
+  it.each(['en', 'sr', 'ru'])('warns in %s when saving fails', async (language) => {
+    const save = vi.spyOn(persistence, 'savePersistedStateAsync').mockResolvedValue(false);
+    const app = persistenceApp();
+    app.state.language = language;
+    changeExpenses(app);
+    await Promise.resolve();
+    expect(app.showToast).toHaveBeenCalledOnce();
+    expect(app.showToast).toHaveBeenCalledWith(UI_TEXT[language].saveFailedToast, 'error');
+    save.mockRestore();
+  });
+
+  it('does not warn when saving succeeds, including fallback success', async () => {
+    const save = vi.spyOn(persistence, 'savePersistedStateAsync').mockResolvedValue(true);
+    const app = persistenceApp();
+    changeExpenses(app);
+    await Promise.resolve();
+    expect(app.showToast).not.toHaveBeenCalled();
+    save.mockRestore();
+  });
+
+  it('registers only one callback for a coalesced promise and does not retry on toast updates', async () => {
+    const pending = deferred();
+    const then = vi.fn((callback) => pending.promise.then(callback));
+    const save = vi.spyOn(persistence, 'savePersistedStateAsync').mockReturnValue({ then });
+    const app = persistenceApp();
+    changeExpenses(app);
+    changeExpenses(app);
+    expect(save).toHaveBeenCalledTimes(2);
+    expect(then).toHaveBeenCalledTimes(1);
+    pending.resolve(false);
+    await pending.promise;
+    expect(app.showToast).toHaveBeenCalledOnce();
+    app.componentDidUpdate();
+    expect(save).toHaveBeenCalledTimes(2);
+    save.mockRestore();
+  });
+
+  it('ignores stale outcomes and allows a later save to recover', async () => {
+    const first = deferred();
+    const second = deferred();
+    const third = deferred();
+    const save = vi
+      .spyOn(persistence, 'savePersistedStateAsync')
+      .mockReturnValueOnce(first.promise)
+      .mockReturnValueOnce(second.promise)
+      .mockReturnValueOnce(third.promise);
+    const app = persistenceApp();
+    changeExpenses(app);
+    changeExpenses(app);
+    first.resolve(false);
+    await first.promise;
+    expect(app.showToast).not.toHaveBeenCalled();
+    second.resolve(false);
+    await second.promise;
+    expect(app.showToast).toHaveBeenCalledOnce();
+    changeExpenses(app);
+    third.resolve(true);
+    await third.promise;
+    expect(app.showToast).toHaveBeenCalledOnce();
+    save.mockRestore();
+  });
+
+  it('does not notify after unmount', async () => {
+    const pending = deferred();
+    const save = vi.spyOn(persistence, 'savePersistedStateAsync').mockReturnValue(pending.promise);
+    const app = persistenceApp();
+    changeExpenses(app);
+    app.componentWillUnmount();
+    pending.resolve(false);
+    await pending.promise;
+    expect(app.showToast).not.toHaveBeenCalled();
+    save.mockRestore();
+  });
+});
 
 function submissionApp(overrides = {}) {
   const app = new App({});

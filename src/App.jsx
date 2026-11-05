@@ -137,6 +137,7 @@ export default class App extends React.Component {
 
   componentWillUnmount() {
     this._mounted = false;
+    this._pendingSave = null;
     if (this._splashFadeTimer) clearTimeout(this._splashFadeTimer);
     if (this._splashTimer) clearTimeout(this._splashTimer);
     if (this._toastTimer) clearTimeout(this._toastTimer);
@@ -166,7 +167,15 @@ export default class App extends React.Component {
         prev.categorySortDir !== s.categorySortDir ||
         prev.ungroupedSortDir !== s.ungroupedSortDir)
     ) {
-      savePersistedStateAsync(s);
+      const pending = savePersistedStateAsync(s);
+      if (pending !== this._pendingSave) {
+        this._pendingSave = pending;
+        pending.then((saved) => {
+          if (!this._mounted || this._pendingSave !== pending) return;
+          this._pendingSave = null;
+          if (!saved) this.showToast(this.getText().saveFailedToast, 'error');
+        });
+      }
     }
     this._persistSnapshot = pickPersistedState(s);
 
