@@ -256,7 +256,7 @@ export default class App extends React.Component {
 
   catLabel(cat) {
     const names = CATEGORY_NAMES_BY_LANGUAGE[this.state.language] || CATEGORY_NAMES_BY_LANGUAGE.en;
-    return names[cat.id] || cat.name;
+    return Object.hasOwn(names, cat.id) ? names[cat.id] : cat.name;
   }
 
   convertAndFormat(amount, cur, includeCurrency = true) {
