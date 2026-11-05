@@ -27,7 +27,7 @@ import {
 } from './persistence/localState.js';
 import { createTotalAnimator } from './utils/totalAnimator.js';
 import { playChaChing } from './utils/chaChing.js';
-import { buildViewData } from './selectors/getViewData.js';
+import { createViewDataSelector } from './selectors/getViewData.js';
 import { Splash } from './components/Splash.jsx';
 import { AppHeader } from './components/AppHeader.jsx';
 import { AppFooter } from './components/AppFooter.jsx';
@@ -58,6 +58,7 @@ export default class App extends React.Component {
   constructor(props) {
     super(props);
     this._selectExpenseData = createExpenseDataSelector();
+    this._selectViewData = createViewDataSelector();
     this.state = {
       period: 'month',
       periodOffset: 0,
@@ -666,7 +667,7 @@ export default class App extends React.Component {
   // ---------- derived view data ----------
 
   getViewData() {
-    return buildViewData(this);
+    return this._selectViewData(this);
   }
 
   render() {
