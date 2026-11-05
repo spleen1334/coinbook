@@ -152,12 +152,8 @@ function loadLocalStorageState() {
 }
 
 function removeLocalStorageState() {
-  try {
-    const storage = getLocalStorage();
-    if (storage) storage.removeItem(STORAGE_KEY);
-  } catch (err) {
-    /* storage unavailable (private mode, quota) */
-  }
+  const storage = getLocalStorage();
+  if (storage) storage.removeItem(STORAGE_KEY);
 }
 
 function hasPersistedFields(state) {
@@ -233,14 +229,8 @@ async function saveIndexedDbState(state) {
 }
 
 export async function loadPersistedState() {
-  let idbState = {};
-  try {
-    idbState = await loadIndexedDbState();
-  } catch (err) {
-    /* IndexedDB unavailable or read failed; fall back to localStorage below. */
-  }
-  if (hasPersistedFields(idbState)) return idbState;
-
+  // localStorage exists only for legacy data or a newer failed IDB save. Prefer
+  // it over potentially stale IDB data, and remove it only after migration commits.
   const localState = loadLocalStorageState();
   if (hasPersistedFields(localState)) {
     try {
@@ -249,6 +239,11 @@ export async function loadPersistedState() {
       /* Best-effort migration to IndexedDB; keep the localStorage data either way. */
     }
     return localState;
+  }
+  try {
+    return await loadIndexedDbState();
+  } catch (err) {
+    /* IndexedDB unavailable or read failed. */
   }
   return {};
 }
@@ -278,19 +273,32 @@ export function savePersistedStateAsync(state) {
 
   pendingSave = Promise.resolve()
     .then(async () => {
+      let saved = false;
       while (queuedSave) {
         const nextSave = queuedSave;
         queuedSave = null;
         try {
           await saveIndexedDbState(nextSave);
+          saved = true;
         } catch (err) {
-          /* IndexedDB unavailable; keep in-memory state only. */
+          try {
+            const storage = getLocalStorage();
+            if (!storage) throw new Error('localStorage unavailable');
+            storage.setItem(STORAGE_KEY, JSON.stringify(nextSave));
+            saved = true;
+          } catch (err) {
+            saved = false;
+          }
         }
       }
+      // All coalesced callers receive the durability outcome of the latest save.
+      return saved;
     })
-    .finally(() => {
+    .then((saved) => {
       pendingSave = null;
-      if (queuedSave) savePersistedStateAsync(queuedSave);
+      // A save can arrive between the drain finishing and this settlement job.
+      // Chain that drain so existing callers wait for its durability result too.
+      return queuedSave ? savePersistedStateAsync(queuedSave) : saved;
     });
 
   return pendingSave;

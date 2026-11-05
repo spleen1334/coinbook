@@ -1,5 +1,12 @@
 import { describe, it, expect, afterEach, vi } from 'vitest';
-import { normalizePersistedState, pickPersistedState, loadPersistedState, DEFAULT_RATES } from './localState.js';
+import {
+  normalizePersistedState,
+  pickPersistedState,
+  loadPersistedState,
+  savePersistedStateAsync,
+  STORAGE_KEY,
+  DEFAULT_RATES
+} from './localState.js';
 import { hashCatColor } from '../utils/coin.js';
 
 describe('normalizePersistedState', () => {
@@ -254,6 +261,196 @@ describe('pickPersistedState', () => {
       categorySortDir: 'desc',
       ungroupedSortDir: 'desc'
     });
+  });
+});
+
+// Transaction completion is controlled separately from request success, as in IDB.
+function fakeStorage({ initial, failWrites = false, manual = false } = {}) {
+  let snapshot = initial;
+  const writes = [];
+  const completions = [];
+  const local = new Map();
+  const localStorage = {
+    getItem: vi.fn((key) => local.get(key) ?? null),
+    setItem: vi.fn((key, value) => local.set(key, value)),
+    removeItem: vi.fn((key) => local.delete(key))
+  };
+  const db = {
+    close: vi.fn(),
+    transaction: vi.fn(() => {
+      const tx = {
+        objectStore: () => ({
+          get: () => {
+            const request = {};
+            queueMicrotask(() => {
+              request.result = snapshot;
+              request.onsuccess();
+            });
+            return request;
+          },
+          put: (value) => {
+            writes.push(value);
+            const request = {};
+            const complete = () => {
+              if (failWrites) {
+                tx.error = new Error('write failed');
+                tx.onabort();
+              } else {
+                snapshot = value;
+                request.onsuccess();
+                tx.oncomplete();
+              }
+            };
+            if (manual) completions.push(complete);
+            else queueMicrotask(complete);
+            return request;
+          }
+        })
+      };
+      return tx;
+    })
+  };
+  const indexedDB = {
+    open: vi.fn(() => {
+      const request = {};
+      queueMicrotask(() => {
+        request.result = db;
+        request.onsuccess();
+      });
+      return request;
+    })
+  };
+  vi.stubGlobal('window', { localStorage, indexedDB });
+  return { local, localStorage, writes, completions, db, indexedDB };
+}
+
+describe('durable persistence', () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  it('writes the unchanged snapshot schema to localStorage after an IDB transaction abort', async () => {
+    const storage = fakeStorage({ failWrites: true });
+    const state = { language: 'sr', expenses: [], screen: 'settings' };
+    await expect(savePersistedStateAsync(state)).resolves.toBe(true);
+    expect(JSON.parse(storage.local.get(STORAGE_KEY))).toEqual({ language: 'sr', expenses: [] });
+    expect(storage.db.close).toHaveBeenCalled();
+    await expect(loadPersistedState()).resolves.toEqual({ language: 'sr', expenses: [] });
+    expect(storage.local.has(STORAGE_KEY)).toBe(true);
+  });
+
+  it('reports failure when both backends reject writes', async () => {
+    const storage = fakeStorage({ failWrites: true });
+    storage.localStorage.setItem.mockImplementation(() => {
+      throw new Error('quota exceeded');
+    });
+    await expect(savePersistedStateAsync({ language: 'sr' })).resolves.toBe(false);
+  });
+
+  it('reports failure when neither backend is available', async () => {
+    vi.stubGlobal('window', {});
+    await expect(savePersistedStateAsync({ language: 'sr' })).resolves.toBe(false);
+  });
+
+  it('overwrites stale fallback when cleanup after an IDB save fails', async () => {
+    const storage = fakeStorage({ initial: { language: 'en' } });
+    storage.local.set(STORAGE_KEY, JSON.stringify({ language: 'en' }));
+    storage.localStorage.removeItem.mockImplementation(() => {
+      throw new Error('removal blocked');
+    });
+    await expect(savePersistedStateAsync({ language: 'sr' })).resolves.toBe(true);
+    expect(JSON.parse(storage.local.get(STORAGE_KEY))).toEqual({ language: 'sr' });
+    await expect(loadPersistedState()).resolves.toEqual({ language: 'sr' });
+  });
+
+  it('reports failure if stale fallback can neither be removed nor overwritten', async () => {
+    const storage = fakeStorage();
+    storage.local.set(STORAGE_KEY, JSON.stringify({ language: 'en' }));
+    storage.localStorage.removeItem.mockImplementation(() => {
+      throw new Error('removal blocked');
+    });
+    storage.localStorage.setItem.mockImplementation(() => {
+      throw new Error('write blocked');
+    });
+    await expect(savePersistedStateAsync({ language: 'sr' })).resolves.toBe(false);
+    expect(JSON.parse(storage.local.get(STORAGE_KEY))).toEqual({ language: 'en' });
+  });
+
+  it('chains saves arriving between the drain and settlement and returns their outcome', async () => {
+    const storage = fakeStorage({ manual: true, failWrites: true });
+    let boundaryCaller;
+    storage.localStorage.setItem.mockImplementationOnce((key, value) => {
+      storage.local.set(key, value);
+      // This job runs after the drain returns, before its settlement handler.
+      queueMicrotask(() => {
+        boundaryCaller = savePersistedStateAsync({ language: 'sr' });
+      });
+    });
+    const first = savePersistedStateAsync({ language: 'en' });
+    let settled = false;
+    first.then(() => {
+      settled = true;
+    });
+    await vi.waitFor(() => expect(storage.completions).toHaveLength(1));
+    storage.completions.shift()();
+    await vi.waitFor(() => expect(storage.writes).toHaveLength(2));
+    expect(boundaryCaller).toBe(first);
+    expect(settled).toBe(false);
+    storage.localStorage.setItem.mockImplementation(() => {
+      throw new Error('quota exceeded');
+    });
+    storage.completions.shift()();
+    await expect(first).resolves.toBe(false);
+    await expect(boundaryCaller).resolves.toBe(false);
+  });
+
+  it('prefers newer fallback data over stale IDB and cleans up only after migration commits', async () => {
+    const storage = fakeStorage({ initial: { language: 'en' }, manual: true });
+    storage.local.set(STORAGE_KEY, JSON.stringify({ language: 'sr' }));
+    const loading = loadPersistedState();
+    await vi.waitFor(() => expect(storage.completions).toHaveLength(1));
+    expect(storage.local.has(STORAGE_KEY)).toBe(true);
+    storage.completions.shift()();
+    await expect(loading).resolves.toEqual({ language: 'sr' });
+    expect(storage.local.has(STORAGE_KEY)).toBe(false);
+    await expect(loadPersistedState()).resolves.toEqual({ language: 'sr' });
+  });
+
+  it.each(['not json', '{}'])('ignores invalid or empty fallback %s', async (raw) => {
+    const storage = fakeStorage({ initial: { language: 'en' } });
+    storage.local.set(STORAGE_KEY, raw);
+    await expect(loadPersistedState()).resolves.toEqual({ language: 'en' });
+    expect(storage.writes).toHaveLength(0);
+  });
+
+  it('serializes saves and coalesces queued snapshots to the latest one', async () => {
+    const storage = fakeStorage({ manual: true });
+    const first = savePersistedStateAsync({ language: 'en' });
+    await vi.waitFor(() => expect(storage.completions).toHaveLength(1));
+    const middle = savePersistedStateAsync({ language: 'sr' });
+    const latest = savePersistedStateAsync({ language: 'ru' });
+    expect(middle).toBe(first);
+    expect(latest).toBe(first);
+    expect(storage.writes.map((state) => state.language)).toEqual(['en']);
+    storage.completions.shift()();
+    await vi.waitFor(() => expect(storage.completions).toHaveLength(1));
+    expect(storage.writes.map((state) => state.language)).toEqual(['en', 'ru']);
+    storage.completions.shift()();
+    await expect(first).resolves.toBe(true);
+    await expect(loadPersistedState()).resolves.toEqual({ language: 'ru' });
+  });
+
+  it('returns the latest outcome, not success from an older queued save', async () => {
+    const storage = fakeStorage({ manual: true, failWrites: true });
+    const saving = savePersistedStateAsync({ language: 'en' });
+    await vi.waitFor(() => expect(storage.completions).toHaveLength(1));
+    savePersistedStateAsync({ language: 'sr' });
+    storage.completions.shift()();
+    await vi.waitFor(() => expect(storage.completions).toHaveLength(1));
+    storage.localStorage.setItem.mockImplementation(() => {
+      throw new Error('quota exceeded');
+    });
+    storage.completions.shift()();
+    await expect(saving).resolves.toBe(false);
+    expect(JSON.parse(storage.local.get(STORAGE_KEY))).toEqual({ language: 'en' });
   });
 });
 
