@@ -1,20 +1,22 @@
 import React from 'react';
 import { CATEGORY_DEFINITIONS } from './data/categories.js';
 import { DEMO_EXPENSES } from './data/demoExpenses.js';
-import { MONTHS, MONTHS_BY_LANGUAGE, CATEGORY_NAMES_BY_LANGUAGE, UI_TEXT } from './data/i18n.js';
+import { MONTHS, MONTHS_BY_LANGUAGE, UI_TEXT } from './data/i18n.js';
 import { LedgerScreen } from './components/LedgerScreen.jsx';
 import { ChartScreen } from './components/ChartScreen.jsx';
 import { ChartPeriodControls } from './components/ChartPeriodControls.jsx';
 import { SettingsScreen } from './components/SettingsScreen.jsx';
 import { AddSheet } from './components/AddSheet.jsx';
-import { isoOf, formatShortDate } from './utils/date.js';
-import { generateRecurringDates, getDefaultRecurrenceEnd } from './utils/recurrence.js';
+import { isoOf } from './utils/date.js';
+import { generateRecurringDates, getDefaultRecurrenceEnd, isValidRecurrenceFrequency } from './utils/recurrence.js';
+import { isValidDateString, MAX_NOTE_LENGTH, normalizeAmount, normalizeNote } from './utils/validate.js';
 import { getRange as getRange$, getPeriodLabel as getPeriodLabel$ } from './utils/period.js';
 import {
   convertAndFormat as convertAndFormat$,
   convertAndFormatParts as convertAndFormatParts$
 } from './utils/format.js';
 import { downloadFile } from './utils/download.js';
+import { categoryLabel, createExpenseDataSelector } from './selectors/expenseData.js';
 import { fuzzyMatch } from './utils/search.js';
 import { hashCatColor } from './utils/coin.js';
 import {
@@ -25,7 +27,7 @@ import {
 } from './persistence/localState.js';
 import { createTotalAnimator } from './utils/totalAnimator.js';
 import { playChaChing } from './utils/chaChing.js';
-import { buildViewData } from './selectors/getViewData.js';
+import { createViewDataSelector } from './selectors/getViewData.js';
 import { Splash } from './components/Splash.jsx';
 import { AppHeader } from './components/AppHeader.jsx';
 import { AppFooter } from './components/AppFooter.jsx';
@@ -55,6 +57,8 @@ function buildSeedCategories() {
 export default class App extends React.Component {
   constructor(props) {
     super(props);
+    this._selectExpenseData = createExpenseDataSelector();
+    this._selectViewData = createViewDataSelector();
     this.state = {
       period: 'month',
       periodOffset: 0,
@@ -136,6 +140,7 @@ export default class App extends React.Component {
 
   componentWillUnmount() {
     this._mounted = false;
+    this._pendingSave = null;
     if (this._splashFadeTimer) clearTimeout(this._splashFadeTimer);
     if (this._splashTimer) clearTimeout(this._splashTimer);
     if (this._toastTimer) clearTimeout(this._toastTimer);
@@ -165,7 +170,15 @@ export default class App extends React.Component {
         prev.categorySortDir !== s.categorySortDir ||
         prev.ungroupedSortDir !== s.ungroupedSortDir)
     ) {
-      savePersistedStateAsync(s);
+      const pending = savePersistedStateAsync(s);
+      if (pending !== this._pendingSave) {
+        this._pendingSave = pending;
+        pending.then((saved) => {
+          if (!this._mounted || this._pendingSave !== pending) return;
+          this._pendingSave = null;
+          if (!saved) this.showToast(this.getText().saveFailedToast, 'error');
+        });
+      }
     }
     this._persistSnapshot = pickPersistedState(s);
 
@@ -224,39 +237,28 @@ export default class App extends React.Component {
     );
   }
 
-  getFilteredExpenses() {
-    const lang = this.state.language;
+  getExpenseData() {
     const [start, end] = this.getRange();
-    const catById = Object.create(null);
-    this.state.categories.forEach((c) => {
-      catById[c.id] = c;
-    });
-    const query = (this.state.searchQuery || '').trim().toLowerCase();
-    if (query.length > 0) {
-      return this.state.expenses.filter((e) => {
-        const cat = catById[e.categoryId] || { id: 'other', name: 'Other' };
-        const hay = [
-          e.note,
-          this.catLabel(cat),
-          formatShortDate(e.date, lang, MONTHS_BY_LANGUAGE, MONTHS),
-          e.date,
-          String(e.amount)
-        ]
-          .join(' ')
-          .toLowerCase();
-        return fuzzyMatch(query, hay);
-      });
-    }
-    return this.state.expenses.filter((e) => e.date >= start && e.date <= end);
+    return this._selectExpenseData(
+      this.state.expenses,
+      this.state.categories,
+      this.state.language,
+      this.state.searchQuery,
+      start,
+      end
+    );
+  }
+
+  getFilteredExpenses() {
+    return this.getExpenseData().filtered;
   }
 
   computeFilteredTotal() {
-    return this.getFilteredExpenses().reduce((s, e) => s + e.amount, 0);
+    return this.getExpenseData().total;
   }
 
   catLabel(cat) {
-    const names = CATEGORY_NAMES_BY_LANGUAGE[this.state.language] || CATEGORY_NAMES_BY_LANGUAGE.en;
-    return names[cat.id] || cat.name;
+    return categoryLabel(cat, this.state.language);
   }
 
   convertAndFormat(amount, cur, includeCurrency = true) {
@@ -534,17 +536,42 @@ export default class App extends React.Component {
     }));
 
   submitAdd = () => {
-    const amt = parseFloat(this.state.addAmount);
-    if (!amt || amt <= 0) return;
-    if (this.state.addRecurring && (!this.state.addRecurrenceEnd || this.state.addRecurrenceEnd < this.state.addDate)) {
+    const { addDate: date, addNote, addRecurring, addRecurrenceEnd, addRecurrenceFrequency, editingId } = this.state;
+    const text = UI_TEXT[this.state.language] || UI_TEXT.en;
+    const amt = normalizeAmount(this.state.addAmount, null);
+    if (amt === null || amt <= 0) {
+      this.showToast(text.invalidAmountToast, 'error');
       return;
     }
+    if (!isValidDateString(date)) {
+      this.showToast(text.invalidDateToast, 'error');
+      return;
+    }
+    if (typeof addNote === 'string' && addNote.trim().length > MAX_NOTE_LENGTH) {
+      this.showToast(text.noteTooLongToast, 'error');
+      return;
+    }
+    const note = normalizeNote(addNote);
+    let dates = [date];
+    if (addRecurring) {
+      if (
+        !isValidRecurrenceFrequency(addRecurrenceFrequency) ||
+        !isValidDateString(addRecurrenceEnd) ||
+        addRecurrenceEnd < date
+      ) {
+        this.showToast(text.invalidRecurrenceToast, 'error');
+        return;
+      }
+      dates = generateRecurringDates(date, addRecurrenceEnd, addRecurrenceFrequency);
+      if (!dates.length) {
+        this.showToast(text.invalidRecurrenceToast, 'error');
+        return;
+      }
+    }
     this.requestExpenseTotalReplay();
-    if (this.state.editingId) {
-      const editId = this.state.editingId;
-      const date = this.state.addDate || isoOf(today());
+    if (editingId) {
+      const editId = editingId;
       const categoryId = this.state.addCategoryId;
-      const note = (this.state.addNote || '').trim();
       this.setState((s) => ({
         expenses: s.expenses.map((e) => (e.id === editId ? { ...e, amount: amt, date, categoryId, note } : e)),
         showAdd: false,
@@ -556,7 +583,6 @@ export default class App extends React.Component {
       playChaChing();
       this.showToast(UI_TEXT[this.state.language]?.savedToast || 'Saved');
     } else {
-      const date = this.state.addDate || isoOf(today());
       const tick = Date.now();
       const recurrence = this.state.addRecurring
         ? {
@@ -566,13 +592,12 @@ export default class App extends React.Component {
             endDate: this.state.addRecurrenceEnd
           }
         : null;
-      const dates = recurrence ? generateRecurringDates(date, recurrence.endDate, recurrence.frequency) : [date];
       const entries = dates.map((expenseDate, index) => ({
         id: 'e' + tick + (recurrence ? '_' + index : ''),
         amount: amt,
         date: expenseDate,
         categoryId: this.state.addCategoryId,
-        note: (this.state.addNote || '').trim(),
+        note,
         ...(recurrence ? { recurrence } : {})
       }));
       this.setState((s) => ({
@@ -642,7 +667,7 @@ export default class App extends React.Component {
   // ---------- derived view data ----------
 
   getViewData() {
-    return buildViewData(this);
+    return this._selectViewData(this);
   }
 
   render() {

@@ -133,7 +133,7 @@ function buildGroupedList(app, filtered, catById, lang, cur, t) {
   }));
 }
 
-function buildPieSegments(app, filtered, catById, cur) {
+function buildPieSegments(app, filtered, catById, cur, total) {
   const catTotals = new Map();
   filtered.forEach((e) => {
     catTotals.set(e.categoryId, (catTotals.get(e.categoryId) || 0) + e.amount);
@@ -141,7 +141,6 @@ function buildPieSegments(app, filtered, catById, cur) {
   const catArr = Array.from(catTotals.entries())
     .map(([id, amt]) => ({ id, amt, cat: catById[id] || { id: 'other', name: 'Other', color: '#888' } }))
     .sort((a, b) => b.amt - a.amt);
-  const total = filtered.reduce((s, e) => s + e.amount, 0);
   const hoverCatId = app.state.hoverCatId;
 
   let cum = 0;
@@ -251,22 +250,18 @@ function buildSettingsOptions(app, t) {
   };
 }
 
-export function buildViewData(app) {
+export function buildViewData(app, expenseData = app.getExpenseData()) {
   const lang = app.state.language;
   const cur = app.state.currency;
   const t = UI_TEXT[lang] || UI_TEXT.en;
-  const catById = Object.create(null);
-  app.state.categories.forEach((c) => {
-    catById[c.id] = c;
-  });
+  const { catById, filtered, total } = expenseData;
 
   const query = (app.state.searchQuery || '').trim().toLowerCase();
   const isSearching = query.length > 0;
-  const filtered = app.getFilteredExpenses();
   const hasEntries = filtered.length > 0;
 
   const groupedList = buildGroupedList(app, filtered, catById, lang, cur, t);
-  const { pieSegments, hoverCat, total } = buildPieSegments(app, filtered, catById, cur);
+  const { pieSegments, hoverCat } = buildPieSegments(app, filtered, catById, cur, total);
   const donutCenterLabel = hoverCat ? app.catLabel(hoverCat.cat) : t.totalSpent;
   const donutCenterValue = hoverCat
     ? app.convertAndFormat(hoverCat.amt, cur, false)
@@ -377,5 +372,44 @@ export function buildViewData(app) {
             : app.state.swipeDir < 0
               ? 'cbSlideInRight 0.42s cubic-bezier(.2,.8,.3,1)'
               : 'cbFadeSlide 0.38s cubic-bezier(.2,.8,.3,1)'
+  };
+}
+
+// Only state read by the model belongs here. Animation totals, bursts, and toast
+// state render outside this model; callbacks invoke live App methods/state.
+const VIEW_STATE_KEYS = [
+  'language',
+  'currency',
+  'rates',
+  'numberFormat',
+  'rateInputs',
+  'period',
+  'listGrouping',
+  'dateSortDir',
+  'categorySortDir',
+  'ungroupedSortDir',
+  'hoverCatId',
+  'swipingRowId',
+  'swipeRowOffset',
+  'lastAddedId',
+  'addCategoryId',
+  'deleteModalId',
+  'lastAction',
+  'swipeDir'
+];
+
+export function createViewDataSelector() {
+  let previous;
+  let result;
+  return (app) => {
+    // Domain identity includes categories, expenses, normalized search, language,
+    // and freshly calculated calendar bounds, even when React state is unchanged.
+    const domain = app.getExpenseData();
+    const dependencies = [domain, ...VIEW_STATE_KEYS.map((key) => app.state[key])];
+    if (!previous || dependencies.some((value, i) => value !== previous[i])) {
+      result = buildViewData(app, domain);
+      previous = dependencies;
+    }
+    return result;
   };
 }

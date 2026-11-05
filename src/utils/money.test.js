@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { formatNumber, formatMoney } from './money.js';
+import { formatNumber, formatMoney, formatMoneyParts } from './money.js';
 
 const fmt = { thousands: true, thousandsChar: ',', decimals: 2, decimalChar: '.' };
 
@@ -30,6 +30,18 @@ describe('formatNumber', () => {
 });
 
 describe('formatMoney', () => {
+  it.each([
+    ['EUR', '10.00 €', { amount: '10.00', suffix: '€' }],
+    ['RSD', 'RSD 10.00', { prefix: 'RSD', amount: '10.00' }],
+    ['USD', '$10.00', { prefix: '$', amount: '10.00' }],
+    ['RUB', '₽10.00', { prefix: '₽', amount: '10.00' }],
+    ['CNY', '¥10.00', { prefix: '¥', amount: '10.00' }],
+    ['XYZ', '$10.00', { prefix: '$', amount: '10.00' }],
+    ['constructor', '$10.00', { prefix: '$', amount: '10.00' }]
+  ])('formats %s strings and keeps the existing unspaced parts shape', (currency, text, parts) => {
+    expect(formatMoney(10, currency, fmt)).toBe(text);
+    expect(formatMoneyParts(10, currency, fmt)).toEqual(parts);
+  });
   it('formats EUR with a trailing symbol', () => {
     expect(formatMoney(10, 'EUR', fmt)).toBe('10.00 €');
   });

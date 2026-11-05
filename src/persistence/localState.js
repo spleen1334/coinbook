@@ -20,6 +20,16 @@ function getLocalStorage() {
 
 const SORT_DIRS = ['asc', 'desc'];
 
+function normalizeNumberFormat(value) {
+  const format = value && typeof value === 'object' && !Array.isArray(value) ? value : {};
+  return {
+    thousands: typeof format.thousands === 'boolean' ? format.thousands : true,
+    thousandsChar: [',', '.'].includes(format.thousandsChar) ? format.thousandsChar : ',',
+    decimals: [0, 2].includes(format.decimals) ? format.decimals : 2,
+    decimalChar: ['.', ','].includes(format.decimalChar) ? format.decimalChar : '.'
+  };
+}
+
 function normalizeSortDir(value, fallback) {
   return SORT_DIRS.includes(value) ? value : fallback;
 }
@@ -91,12 +101,12 @@ export function normalizePersistedState(saved) {
     const validCategoryIds = new Set(['other', ...(categories || []).map((c) => c.id)]);
     out.expenses = normalizeExpenseRecords(saved.expenses, validCategoryIds);
   }
-  if (saved.language) out.language = saved.language;
-  if (saved.currency) out.currency = saved.currency;
+  if (['en', 'sr', 'ru'].includes(saved.language)) out.language = saved.language;
+  if (['RSD', 'EUR', 'USD', 'RUB', 'CNY'].includes(saved.currency)) out.currency = saved.currency;
   if (saved.rates) out.rates = normalizeRates(saved.rates);
-  if (saved.numberFormat) out.numberFormat = saved.numberFormat;
-  if (saved.listGrouping) out.listGrouping = saved.listGrouping;
-  if (saved.period) out.period = saved.period;
+  if (saved.numberFormat !== undefined) out.numberFormat = normalizeNumberFormat(saved.numberFormat);
+  if (['date', 'category', 'none'].includes(saved.listGrouping)) out.listGrouping = saved.listGrouping;
+  if (['day', 'week', 'month', 'year'].includes(saved.period)) out.period = saved.period;
   if (saved.dateSortDir) out.dateSortDir = normalizeSortDir(saved.dateSortDir, 'desc');
   if (saved.categorySortDir) out.categorySortDir = normalizeSortDir(saved.categorySortDir, 'desc');
   if (saved.ungroupedSortDir) out.ungroupedSortDir = normalizeSortDir(saved.ungroupedSortDir, 'desc');
@@ -152,12 +162,8 @@ function loadLocalStorageState() {
 }
 
 function removeLocalStorageState() {
-  try {
-    const storage = getLocalStorage();
-    if (storage) storage.removeItem(STORAGE_KEY);
-  } catch (err) {
-    /* storage unavailable (private mode, quota) */
-  }
+  const storage = getLocalStorage();
+  if (storage) storage.removeItem(STORAGE_KEY);
 }
 
 function hasPersistedFields(state) {
@@ -233,14 +239,8 @@ async function saveIndexedDbState(state) {
 }
 
 export async function loadPersistedState() {
-  let idbState = {};
-  try {
-    idbState = await loadIndexedDbState();
-  } catch (err) {
-    /* IndexedDB unavailable or read failed; fall back to localStorage below. */
-  }
-  if (hasPersistedFields(idbState)) return idbState;
-
+  // localStorage exists only for legacy data or a newer failed IDB save. Prefer
+  // it over potentially stale IDB data, and remove it only after migration commits.
   const localState = loadLocalStorageState();
   if (hasPersistedFields(localState)) {
     try {
@@ -249,6 +249,11 @@ export async function loadPersistedState() {
       /* Best-effort migration to IndexedDB; keep the localStorage data either way. */
     }
     return localState;
+  }
+  try {
+    return await loadIndexedDbState();
+  } catch (err) {
+    /* IndexedDB unavailable or read failed. */
   }
   return {};
 }
@@ -278,19 +283,32 @@ export function savePersistedStateAsync(state) {
 
   pendingSave = Promise.resolve()
     .then(async () => {
+      let saved = false;
       while (queuedSave) {
         const nextSave = queuedSave;
         queuedSave = null;
         try {
           await saveIndexedDbState(nextSave);
+          saved = true;
         } catch (err) {
-          /* IndexedDB unavailable; keep in-memory state only. */
+          try {
+            const storage = getLocalStorage();
+            if (!storage) throw new Error('localStorage unavailable');
+            storage.setItem(STORAGE_KEY, JSON.stringify(nextSave));
+            saved = true;
+          } catch (err) {
+            saved = false;
+          }
         }
       }
+      // All coalesced callers receive the durability outcome of the latest save.
+      return saved;
     })
-    .finally(() => {
+    .then((saved) => {
       pendingSave = null;
-      if (queuedSave) savePersistedStateAsync(queuedSave);
+      // A save can arrive between the drain finishing and this settlement job.
+      // Chain that drain so existing callers wait for its durability result too.
+      return queuedSave ? savePersistedStateAsync(queuedSave) : saved;
     });
 
   return pendingSave;
