@@ -8,8 +8,73 @@ import {
   DEFAULT_RATES
 } from './localState.js';
 import { hashCatColor } from '../utils/coin.js';
+import { formatNumber } from '../utils/money.js';
 
 describe('normalizePersistedState', () => {
+  it.each([null, false, 42, {}, [], '__proto__', 'constructor', 'toString', 'invalid'])(
+    'omits unsupported enum settings %j',
+    (value) => {
+      expect(normalizePersistedState({ language: value, currency: value, listGrouping: value, period: value })).toEqual(
+        {}
+      );
+    }
+  );
+
+  it('preserves every supported enum setting', () => {
+    for (const [key, values] of Object.entries({
+      language: ['en', 'sr', 'ru'],
+      currency: ['RSD', 'EUR', 'USD', 'RUB', 'CNY'],
+      listGrouping: ['date', 'category', 'none'],
+      period: ['day', 'week', 'month', 'year']
+    })) {
+      for (const value of values) expect(normalizePersistedState({ [key]: value })).toEqual({ [key]: value });
+    }
+  });
+
+  it('fills partial number formats with safe defaults without adding settings to old snapshots', () => {
+    expect(normalizePersistedState({})).not.toHaveProperty('numberFormat');
+    expect(normalizePersistedState({ numberFormat: { decimals: 0 } }).numberFormat).toEqual({
+      thousands: true,
+      thousandsChar: ',',
+      decimals: 0,
+      decimalChar: '.'
+    });
+  });
+
+  it.each([
+    null,
+    false,
+    999,
+    'invalid',
+    [],
+    { thousands: 'false', thousandsChar: {}, decimals: 999, decimalChar: [] },
+    { thousands: 0, thousandsChar: ' ', decimals: '2', decimalChar: '__proto__' },
+    { decimals: -1 },
+    { decimals: 1 },
+    { decimals: 2.5 },
+    { decimals: NaN }
+  ])('normalizes malformed number format %j before rendering', (numberFormat) => {
+    const normalized = normalizePersistedState({ numberFormat }).numberFormat;
+    expect(normalized).toEqual({ thousands: true, thousandsChar: ',', decimals: 2, decimalChar: '.' });
+    expect(() => formatNumber(1234.5, normalized)).not.toThrow();
+    expect(formatNumber(1234.5, normalized)).toBe('1,234.50');
+  });
+
+  it('preserves all supported number-format combinations', () => {
+    for (const thousands of [true, false]) {
+      for (const thousandsChar of [',', '.']) {
+        for (const decimals of [0, 2]) {
+          for (const decimalChar of ['.', ',']) {
+            const numberFormat = { thousands, thousandsChar, decimals, decimalChar };
+            const normalized = normalizePersistedState({ numberFormat }).numberFormat;
+            expect(normalized).toEqual(numberFormat);
+            expect(formatNumber(1234.5, normalized)).toBe(formatNumber(1234.5, numberFormat));
+          }
+        }
+      }
+    }
+  });
+
   it('returns an empty object for non-object input', () => {
     expect(normalizePersistedState(null)).toEqual({});
     expect(normalizePersistedState(undefined)).toEqual({});

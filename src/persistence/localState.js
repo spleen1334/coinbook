@@ -20,6 +20,16 @@ function getLocalStorage() {
 
 const SORT_DIRS = ['asc', 'desc'];
 
+function normalizeNumberFormat(value) {
+  const format = value && typeof value === 'object' && !Array.isArray(value) ? value : {};
+  return {
+    thousands: typeof format.thousands === 'boolean' ? format.thousands : true,
+    thousandsChar: [',', '.'].includes(format.thousandsChar) ? format.thousandsChar : ',',
+    decimals: [0, 2].includes(format.decimals) ? format.decimals : 2,
+    decimalChar: ['.', ','].includes(format.decimalChar) ? format.decimalChar : '.'
+  };
+}
+
 function normalizeSortDir(value, fallback) {
   return SORT_DIRS.includes(value) ? value : fallback;
 }
@@ -91,12 +101,12 @@ export function normalizePersistedState(saved) {
     const validCategoryIds = new Set(['other', ...(categories || []).map((c) => c.id)]);
     out.expenses = normalizeExpenseRecords(saved.expenses, validCategoryIds);
   }
-  if (saved.language) out.language = saved.language;
-  if (saved.currency) out.currency = saved.currency;
+  if (['en', 'sr', 'ru'].includes(saved.language)) out.language = saved.language;
+  if (['RSD', 'EUR', 'USD', 'RUB', 'CNY'].includes(saved.currency)) out.currency = saved.currency;
   if (saved.rates) out.rates = normalizeRates(saved.rates);
-  if (saved.numberFormat) out.numberFormat = saved.numberFormat;
-  if (saved.listGrouping) out.listGrouping = saved.listGrouping;
-  if (saved.period) out.period = saved.period;
+  if (saved.numberFormat !== undefined) out.numberFormat = normalizeNumberFormat(saved.numberFormat);
+  if (['date', 'category', 'none'].includes(saved.listGrouping)) out.listGrouping = saved.listGrouping;
+  if (['day', 'week', 'month', 'year'].includes(saved.period)) out.period = saved.period;
   if (saved.dateSortDir) out.dateSortDir = normalizeSortDir(saved.dateSortDir, 'desc');
   if (saved.categorySortDir) out.categorySortDir = normalizeSortDir(saved.categorySortDir, 'desc');
   if (saved.ungroupedSortDir) out.ungroupedSortDir = normalizeSortDir(saved.ungroupedSortDir, 'desc');
