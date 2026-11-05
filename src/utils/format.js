@@ -1,4 +1,4 @@
-import { formatNumber, formatMoney } from './money.js';
+import { formatNumber, formatMoney, formatMoneyParts } from './money.js';
 import { DEFAULT_RATES } from '../persistence/localState.js';
 
 function resolveRate(rates, cur) {
@@ -15,10 +15,5 @@ export function convertAndFormat(amount, cur, rates, numberFormat, includeCurren
 
 export function convertAndFormatParts(amount, cur, rates, numberFormat) {
   const value = amount * resolveRate(rates, cur);
-  const amountText = formatNumber(value, numberFormat);
-  if (cur === 'EUR') return { amount: amountText, suffix: '€' };
-  if (cur === 'RUB') return { prefix: '₽', amount: amountText };
-  if (cur === 'CNY') return { prefix: '¥', amount: amountText };
-  if (cur === 'RSD') return { prefix: 'RSD', amount: amountText };
-  return { prefix: '$', amount: amountText };
+  return formatMoneyParts(value, cur, numberFormat);
 }

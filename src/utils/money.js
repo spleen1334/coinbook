@@ -9,15 +9,27 @@ export function formatNumber(n, fmt) {
   return (neg ? '-' : '') + out;
 }
 
+const CURRENCY_FORMATS = {
+  EUR: { suffix: '€', separator: ' ' },
+  RSD: { prefix: 'RSD', separator: ' ' },
+  USD: { prefix: '$', separator: '' },
+  RUB: { prefix: '₽', separator: '' },
+  CNY: { prefix: '¥', separator: '' }
+};
+
+function currencyFormat(currency) {
+  return Object.hasOwn(CURRENCY_FORMATS, currency) ? CURRENCY_FORMATS[currency] : CURRENCY_FORMATS.USD;
+}
+
+export function formatMoneyParts(n, currency, fmt) {
+  const { prefix, suffix } = currencyFormat(currency);
+  const amount = formatNumber(n, fmt);
+  // Parts intentionally omit spacing: the existing UI owns symbol layout.
+  return prefix ? { prefix, amount } : { amount, suffix };
+}
+
 export function formatMoney(n, currency, fmt) {
-  const numStr = formatNumber(n, fmt);
-  switch (currency) {
-    case 'EUR':
-      return numStr + ' €';
-    case 'RSD':
-      return 'RSD ' + numStr;
-    case 'USD':
-    default:
-      return '$' + numStr;
-  }
+  const parts = formatMoneyParts(n, currency, fmt);
+  const { separator } = currencyFormat(currency);
+  return parts.prefix ? parts.prefix + separator + parts.amount : parts.amount + separator + parts.suffix;
 }
