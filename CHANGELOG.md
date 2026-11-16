@@ -2,6 +2,12 @@
 
 All notable changes to this project are documented here.
 
+## [1.3.3] - 2026-11-16
+
+### Fixed
+
+- Dismiss entry autocomplete suggestions when tapping outside the field and suggestions, and show them again when typing resumes.
+
 ## [1.3.2] - 2026-11-05
 
 ### Added

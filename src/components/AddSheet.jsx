@@ -44,6 +44,7 @@ export function AddSheet({
   const newCatPreviewInitial = trimmedNewCatName ? trimmedNewCatName.charAt(0).toUpperCase() : '?';
   const [isExpanded, setIsExpanded] = useState(false);
   const [isMemoFocused, setIsMemoFocused] = useState(false);
+  const [suggestionsDismissed, setSuggestionsDismissed] = useState(false);
   const [viewportMetrics, setViewportMetrics] = useState(null);
   const sheetRef = useRef(null);
   const amountRef = useRef(null);
@@ -51,6 +52,15 @@ export function AddSheet({
   const actionsRef = useRef(null);
   const visibilityFrameRef = useRef(null);
   const memoFocusRef = useRef(false);
+  const memoWrapRef = useRef(null);
+
+  useEffect(() => {
+    const dismissOutside = (event) => {
+      if (!memoWrapRef.current?.contains(event.target)) setSuggestionsDismissed(true);
+    };
+    document.addEventListener('pointerdown', dismissOutside);
+    return () => document.removeEventListener('pointerdown', dismissOutside);
+  }, []);
 
   const keepFocusedFieldVisible = () => {
     if (visibilityFrameRef.current) window.cancelAnimationFrame(visibilityFrameRef.current);
@@ -134,6 +144,7 @@ export function AddSheet({
   };
   const focusMemo = () => {
     setMemoEditing(true);
+    setSuggestionsDismissed(false);
     keepFocusedFieldVisible();
   };
   const sheetClassName = `cb-sheet${viewportMetrics ? ' cb-sheet-viewport' : ''}${
@@ -385,20 +396,26 @@ export function AddSheet({
             )}
 
             <div className="cb-field-label">{t.memo}</div>
-            <div className="cb-memo-wrap">
+            <div ref={memoWrapRef} className="cb-memo-wrap">
               <input
                 type="text"
                 enterKeyHint="done"
                 placeholder={t.memoPlaceholder}
                 value={note}
-                onChange={onNoteChange}
+                onChange={(event) => {
+                  setSuggestionsDismissed(false);
+                  onNoteChange(event);
+                }}
                 onFocus={focusMemo}
-                onBlur={() => setMemoEditing(false)}
+                onBlur={(event) => {
+                  setMemoEditing(false);
+                  if (!memoWrapRef.current?.contains(event.relatedTarget)) setSuggestionsDismissed(true);
+                }}
                 className="cb-input cb-input-memo"
                 aria-autocomplete="list"
-                aria-controls={noteSuggestions.length ? 'cb-note-suggestions' : undefined}
+                aria-controls={noteSuggestions.length && !suggestionsDismissed ? 'cb-note-suggestions' : undefined}
               />
-              {noteSuggestions.length > 0 && (
+              {noteSuggestions.length > 0 && !suggestionsDismissed && (
                 <div
                   id="cb-note-suggestions"
                   className="cb-note-suggestions"
